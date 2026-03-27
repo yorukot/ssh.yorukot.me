@@ -11,7 +11,7 @@ func HeaderBox(width int) lipgloss.Style {
 		BorderStyle(lipgloss.RoundedBorder())
 }
 
-func FullScreenBox(w, h int) lipgloss.Style {
+func InnerBox(w, h int) lipgloss.Style {
 	return lipgloss.NewStyle().
 		Width(w).
 		Height(h).

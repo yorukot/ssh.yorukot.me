@@ -7,19 +7,21 @@ import (
 )
 
 type Header struct {
-	Title string
-	Width int
+	title string
+	width int
+	height int
 }
 
-func New(w int) Header {
+func New(w, h int) Header {
 	data := content.GetContent()
 
 	return Header{
-		Title: data.HeaderTitle,
-		Width: w,
+		title: data.HeaderTitle,
+		width: w - 2,
+		height: h - 2,
 	}
 }
 
 func (h Header) Render() string {
-	return styles.HeaderBox(h.Width).Align(lipgloss.Left).Render(h.Title)
+	return styles.HeaderBox(h.width).Align(lipgloss.Left).Render(h.title)
 }

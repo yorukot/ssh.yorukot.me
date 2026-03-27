@@ -10,6 +10,7 @@ import (
 	contentpkg "github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
+	markdownpkg "github.com/yorukot/ssh.yorukot.me/pkg/markdown"
 	"github.com/yorukot/ssh.yorukot.me/pkg/pathutil"
 )
 
@@ -49,10 +50,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.bg = "dark"
 		}
 	case tea.WindowSizeMsg:
-		m.screenHeight = msg.Height
-		m.screenWidth = msg.Width
-		m.width = min(m.screenWidth - 2, 100)
-		m.height = m.screenHeight - 2
+		m.height = msg.Height
+		m.width = msg.Width
+		m.innerHeight = m.height
+		m.innerWidth = min(m.width, 82)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -65,7 +66,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() tea.View {
 	// Header Render
 	var content string
-	h := header.New(m.width)
+	h := header.New(m.innerWidth, m.innerHeight)
 	headerContent := h.Render()
 
 	content += headerContent
@@ -75,18 +76,14 @@ func (m Model) View() tea.View {
 		markdownContent = fmt.Sprintf("\n\nfailed to load markdown for %s\n\n%s", m.path, err)
 	}
 
+	markdownContent = markdownpkg.New(max(m.innerWidth-2, 40), m.bg).Render(markdownContent)
+
 	content += "\n\n" + strings.TrimSpace(markdownContent)
 
-	inner := styles.FullScreenBox(m.screenHeight, m.screenHeight).Render(content)
-	view := lipgloss.Place(
-		m.screenWidth,
-		m.screenHeight,
-		lipgloss.Center,
-		lipgloss.Top,
-		inner,
-	)
+	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(content)
 
-	v := tea.NewView(view)
+	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)
+	v := tea.NewView(final)
 	v.AltScreen = true
 	return v
 }

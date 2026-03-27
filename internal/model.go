@@ -1,11 +1,11 @@
 package internal
 
 type Model struct {
-	screenWidth  int
-	screenHeight int
+	width  int
+	height int
+	innerWidth        int
+	innerHeight       int
 	profile      string
-	width        int
-	height       int
 	bg           string
 	path         string
 }
