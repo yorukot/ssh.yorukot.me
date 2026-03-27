@@ -1,9 +1,11 @@
 package internal
 
 type Model struct {
-	profile string
-	width   int
-	height  int
-	bg      string
-	path    string
+	screenWidth  int
+	screenHeight int
+	profile      string
+	width        int
+	height       int
+	bg           string
+	path         string
 }

@@ -1,11 +1,19 @@
 package styles
 
-import "charm.land/lipgloss/v2"
+import (
+	"charm.land/lipgloss/v2"
+)
 
-func BoxHeader(width int) lipgloss.Style {
-	style := lipgloss.NewStyle().
+func HeaderBox(width int) lipgloss.Style {
+	return lipgloss.NewStyle().
 		Width(width).
-		Padding(0, 2).
+		Padding(0, 1).
 		BorderStyle(lipgloss.RoundedBorder())
-	return style
+}
+
+func FullScreenBox(w, h int) lipgloss.Style {
+	return lipgloss.NewStyle().
+		Width(w).
+		Height(h).
+		Padding(1, 1)
 }

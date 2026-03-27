@@ -21,5 +21,5 @@ func New(w int) Header {
 }
 
 func (h Header) Render() string {
-	return styles.BoxHeader(h.Width).Align(lipgloss.Left).Render(h.Title)
+	return styles.HeaderBox(h.Width).Align(lipgloss.Left).Render(h.Title)
 }
