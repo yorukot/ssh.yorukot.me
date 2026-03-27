@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/ssh"
@@ -29,6 +30,7 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 		width:  pty.Window.Width,
 		height: pty.Window.Height,
 		bg:     "light",
+		keys:   newKeyMap(),
 		path:   requestPath,
 	}
 	return m, []tea.ProgramOption{}
@@ -55,32 +57,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.innerHeight = m.height
 		m.innerWidth = min(m.width, 82)
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
+		switch {
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.Up):
+			m.scrollOffset = max(m.scrollOffset-1, 0)
+		case key.Matches(msg, m.keys.Down):
+			m.scrollOffset++
+		case key.Matches(msg, m.keys.PageUp):
+			m.scrollOffset = max(m.scrollOffset-max(m.contentViewportHeight()-1, 1), 0)
+		case key.Matches(msg, m.keys.PageDown):
+			m.scrollOffset += max(m.contentViewportHeight()-1, 1)
+		case key.Matches(msg, m.keys.Home):
+			m.scrollOffset = 0
+		case key.Matches(msg, m.keys.End):
+			m.scrollOffset = 1 << 30
 		}
 	}
 	return m, nil
 }
 
 func (m Model) View() tea.View {
-	// Header Render
-	var content string
 	h := header.New(m.innerWidth, m.innerHeight)
 	headerContent := h.Render()
-
-	content += headerContent
 
 	markdownContent, err := contentpkg.MarkdownContent(m.path)
 	if err != nil {
 		markdownContent = fmt.Sprintf("\n\nfailed to load markdown for %s\n\n%s", m.path, err)
 	}
 
-	markdownContent = markdownpkg.New(max(m.innerWidth-2, 40), m.bg).Render(markdownContent)
-
-	content += "\n\n" + strings.TrimSpace(markdownContent)
-
-	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(content)
+	contentWidth := max(m.innerWidth-5, 20)
+	markdownContent = markdownpkg.New(contentWidth, m.bg).Render(markdownContent)
+	contentView := m.renderScrollableContent(strings.TrimSpace(markdownContent), contentWidth, headerContent)
+	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, "", contentView)
+	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)
 
 	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)
 	v := tea.NewView(final)

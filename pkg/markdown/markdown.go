@@ -29,14 +29,15 @@ type Markdown struct {
 	Muted         lipgloss.Style
 	HeadingMarker lipgloss.Style
 	HeadingText   lipgloss.Style
-	QuoteMarker   lipgloss.Style
+	QuoteBlock    lipgloss.Style
 	QuoteText     lipgloss.Style
 	ListMarker    lipgloss.Style
 	Rule          lipgloss.Style
 	Fence         lipgloss.Style
 	CodeText      lipgloss.Style
 	InlineCode    lipgloss.Style
-	Link          lipgloss.Style
+	LinkLabel     lipgloss.Style
+	LinkURL       lipgloss.Style
 	Image         lipgloss.Style
 	Emphasis      lipgloss.Style
 	Strong        lipgloss.Style
@@ -49,8 +50,10 @@ func New(width int, background string) Markdown {
 	headingMarker := "213"
 	headingText := "229"
 	quote := "151"
+	quoteBG := "235"
 	list := "221"
-	link := "117"
+	linkLabel := "117"
+	linkURL := "111"
 	image := "180"
 	inlineCode := "222"
 	codeBG := "236"
@@ -62,8 +65,10 @@ func New(width int, background string) Markdown {
 		headingMarker = "161"
 		headingText = "25"
 		quote = "31"
+		quoteBG = "254"
 		list = "166"
-		link = "26"
+		linkLabel = "26"
+		linkURL = "61"
 		image = "95"
 		inlineCode = "124"
 		codeBG = "255"
@@ -78,17 +83,23 @@ func New(width int, background string) Markdown {
 		Muted:         lipgloss.NewStyle().Foreground(lipgloss.Color(muted)),
 		HeadingMarker: lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(headingMarker)),
 		HeadingText:   lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(headingText)),
-		QuoteMarker:   lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(quote)),
-		QuoteText:     lipgloss.NewStyle().Foreground(lipgloss.Color(quote)),
-		ListMarker:    lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(list)),
-		Rule:          lipgloss.NewStyle().Foreground(lipgloss.Color(muted)),
-		Fence:         lipgloss.NewStyle().Foreground(lipgloss.Color(muted)),
-		CodeText:      lipgloss.NewStyle().Foreground(lipgloss.Color(text)).Background(lipgloss.Color(codeBG)),
-		InlineCode:    lipgloss.NewStyle().Foreground(lipgloss.Color(inlineCode)).Background(lipgloss.Color(codeBG)).Bold(true),
-		Link:          lipgloss.NewStyle().Underline(true).Foreground(lipgloss.Color(link)).Bold(true),
-		Image:         lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color(image)),
-		Emphasis:      lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color(emphasis)),
-		Strong:        lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(strong)),
+		QuoteBlock: lipgloss.NewStyle().
+			BorderLeft(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color(quote)).
+			Background(lipgloss.Color(quoteBG)).
+			PaddingLeft(1),
+		QuoteText:  lipgloss.NewStyle().Foreground(lipgloss.Color(quote)),
+		ListMarker: lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(list)),
+		Rule:       lipgloss.NewStyle().Foreground(lipgloss.Color(muted)),
+		Fence:      lipgloss.NewStyle().Foreground(lipgloss.Color(muted)),
+		CodeText:   lipgloss.NewStyle().Foreground(lipgloss.Color(text)).Background(lipgloss.Color(codeBG)),
+		InlineCode: lipgloss.NewStyle().Foreground(lipgloss.Color(inlineCode)).Background(lipgloss.Color(codeBG)).Bold(true),
+		LinkLabel:  lipgloss.NewStyle().Underline(true).Foreground(lipgloss.Color(linkLabel)).Bold(true),
+		LinkURL:    lipgloss.NewStyle().Foreground(lipgloss.Color(linkURL)),
+		Image:      lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color(image)),
+		Emphasis:   lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color(emphasis)),
+		Strong:     lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(strong)),
 	}
 }
 
@@ -97,8 +108,10 @@ func (m Markdown) Render(content string) string {
 	if content == "" {
 		return ""
 	}
+	return m.renderLines(strings.Split(content, "\n"))
+}
 
-	lines := strings.Split(content, "\n")
+func (m Markdown) renderLines(lines []string) string {
 	parts := make([]string, 0, len(lines))
 
 	inFence := false
@@ -114,13 +127,23 @@ func (m Markdown) Render(content string) string {
 		codeLines = codeLines[:0]
 	}
 
-	for _, line := range lines {
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
 		if !inFence {
 			if matches := fencePattern.FindStringSubmatch(line); matches != nil {
 				inFence = true
 				fence = matches[1]
 				language = strings.TrimSpace(matches[2])
 				parts = append(parts, m.Fence.Render(line))
+				continue
+			}
+
+			if blockquotePattern.MatchString(line) {
+				start := i
+				for i+1 < len(lines) && blockquotePattern.MatchString(lines[i+1]) {
+					i++
+				}
+				parts = append(parts, m.renderQuoteBlock(lines[start:i+1]))
 				continue
 			}
 
@@ -160,10 +183,6 @@ func (m Markdown) renderLine(line string) string {
 		return m.HeadingMarker.Render(matches[1]) + matches[2] + m.renderInline(matches[3], m.HeadingText)
 	}
 
-	if matches := blockquotePattern.FindStringSubmatch(line); matches != nil {
-		return m.QuoteMarker.Render(matches[1]) + m.renderInline(matches[2], m.QuoteText)
-	}
-
 	if matches := unorderedListPattern.FindStringSubmatch(line); matches != nil {
 		return m.ListMarker.Render(matches[1]) + m.renderInline(matches[2], m.Text)
 	}
@@ -173,6 +192,30 @@ func (m Markdown) renderLine(line string) string {
 	}
 
 	return m.renderInline(line, m.Text)
+}
+
+func (m Markdown) renderQuoteBlock(lines []string) string {
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	rendered := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			rendered = append(rendered, "")
+			continue
+		}
+
+		matches := blockquotePattern.FindStringSubmatch(line)
+		if matches == nil {
+			rendered = append(rendered, m.renderLine(line))
+			continue
+		}
+
+		rendered = append(rendered, m.renderInline(matches[2], m.QuoteText))
+	}
+
+	return m.QuoteBlock.Width(m.Width).Render(strings.Join(rendered, "\n"))
 }
 
 func (m Markdown) renderInline(line string, base lipgloss.Style) string {
@@ -205,7 +248,7 @@ func (m Markdown) renderToken(token string) string {
 	case strings.HasPrefix(token, "!["):
 		return m.Image.Render(token)
 	case strings.HasPrefix(token, "["):
-		return m.Link.Render(token)
+		return m.renderLink(token)
 	case strings.HasPrefix(token, "`"):
 		return m.InlineCode.Render(token)
 	case strings.HasPrefix(token, "**") || strings.HasPrefix(token, "__"):
@@ -215,6 +258,23 @@ func (m Markdown) renderToken(token string) string {
 	default:
 		return m.Text.Render(token)
 	}
+}
+
+func (m Markdown) renderLink(token string) string {
+	open := strings.Index(token, "](")
+	close := strings.LastIndex(token, ")")
+	if open == -1 || close == -1 || close <= open+1 {
+		return m.LinkLabel.Render(token)
+	}
+
+	label := token[1:open]
+	url := token[open+2 : close]
+	if strings.TrimSpace(label) == "" {
+		label = url
+	}
+
+	visible := m.LinkLabel.Render("[" + label + "]")
+	return osc8Link(url, visible)
 }
 
 func (m Markdown) renderHighlightedCode(code, language string) string {
@@ -255,4 +315,12 @@ func fallbackLanguage(language string) string {
 		return "text"
 	}
 	return language
+}
+
+func osc8Link(url, label string) string {
+	if strings.TrimSpace(url) == "" {
+		return label
+	}
+
+	return "\x1b]8;;" + url + "\x07" + label + "\x1b]8;;\x07"
 }
