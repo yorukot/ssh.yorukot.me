@@ -44,3 +44,14 @@ func newKeyMap() keyMap {
 		),
 	}
 }
+
+func (k keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Up, k.Down, k.PageUp, k.PageDown, k.Home, k.End, k.Quit}
+}
+
+func (k keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Up, k.Down, k.PageUp, k.PageDown},
+		{k.Home, k.End, k.Quit},
+	}
+}

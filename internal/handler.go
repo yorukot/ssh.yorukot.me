@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -14,6 +15,8 @@ import (
 	markdownpkg "github.com/yorukot/ssh.yorukot.me/pkg/markdown"
 	"github.com/yorukot/ssh.yorukot.me/pkg/pathutil"
 )
+
+const mouseWheelStep = 3
 
 // You can wire any Bubble Tea model up to the middleware with a function that
 // handles the incoming ssh.Session. Here we just grab the terminal info and
@@ -30,20 +33,21 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 		width:  pty.Window.Width,
 		height: pty.Window.Height,
 		bg:     "light",
+		help:   help.New(),
 		keys:   newKeyMap(),
 		path:   requestPath,
 	}
-	return m, []tea.ProgramOption{}
+	return &m, []tea.ProgramOption{}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	// default values
 	return tea.Batch(
 		tea.RequestBackgroundColor,
 	)
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.ColorProfileMsg:
 		m.profile = msg.String()
@@ -51,33 +55,42 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.IsDark() {
 			m.bg = "dark"
 		}
+		m.setHelpStyle()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
 		m.innerHeight = m.height
 		m.innerWidth = min(m.width, 82)
+		m.help.SetWidth(max(m.innerWidth-2, 0))
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Up):
-			m.scrollOffset = max(m.scrollOffset-1, 0)
+			m.scrollBy(-1)
 		case key.Matches(msg, m.keys.Down):
-			m.scrollOffset++
+			m.scrollBy(1)
 		case key.Matches(msg, m.keys.PageUp):
-			m.scrollOffset = max(m.scrollOffset-max(m.contentViewportHeight()-1, 1), 0)
+			m.scrollBy(-max(m.contentViewportHeight()-1, 1))
 		case key.Matches(msg, m.keys.PageDown):
-			m.scrollOffset += max(m.contentViewportHeight()-1, 1)
+			m.scrollBy(max(m.contentViewportHeight()-1, 1))
 		case key.Matches(msg, m.keys.Home):
 			m.scrollOffset = 0
 		case key.Matches(msg, m.keys.End):
 			m.scrollOffset = 1 << 30
 		}
+	case tea.MouseWheelMsg:
+		switch msg.Button {
+		case tea.MouseWheelUp:
+			m.scrollBy(-mouseWheelStep)
+		case tea.MouseWheelDown:
+			m.scrollBy(mouseWheelStep)
+		}
 	}
 	return m, nil
 }
 
-func (m Model) View() tea.View {
+func (m *Model) View() tea.View {
 	h := header.New(m.innerWidth, m.innerHeight)
 	headerContent := h.Render()
 
@@ -89,11 +102,29 @@ func (m Model) View() tea.View {
 	contentWidth := max(m.innerWidth-5, 20)
 	markdownContent = markdownpkg.New(contentWidth, m.bg).Render(markdownContent)
 	contentView := m.renderScrollableContent(strings.TrimSpace(markdownContent), contentWidth, headerContent)
-	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, "", contentView)
+	helpView := m.renderHelpFooter(contentWidth)
+	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, "", contentView, "", helpView)
 	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)
 
 	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)
 	v := tea.NewView(final)
 	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
 	return v
+}
+
+func (m *Model) scrollBy(delta int) {
+	m.scrollOffset = max(m.scrollOffset+delta, 0)
+}
+
+func (m *Model) renderHelpFooter(width int) string {
+	m.setHelpStyle()
+	m.help.SetWidth(width)
+
+	footer := m.help.View(m.keys)
+	return lipgloss.NewStyle().Width(width).Render(footer)
+}
+
+func (m *Model) setHelpStyle() {
+	m.help.Styles = help.DefaultStyles(m.bg == "dark")
 }

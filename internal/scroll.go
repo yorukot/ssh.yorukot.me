@@ -9,18 +9,17 @@ import (
 
 func (m *Model) contentViewportHeight() int {
 	headerHeight := lipgloss.Height(header.New(m.innerWidth, m.innerHeight).Render())
-	return max(m.innerHeight-headerHeight-4, 3)
+	footerHeight := lipgloss.Height(m.renderHelpFooter(max(m.innerWidth-5, 20)))
+	return max(m.innerHeight-headerHeight-footerHeight-5, 3)
 }
 
 func (m *Model) renderScrollableContent(content string, width int, headerContent string) string {
 	contentStyle := lipgloss.NewStyle().Width(width)
 	wrapped := contentStyle.Render(content)
 	lines := strings.Split(wrapped, "\n")
-	viewportHeight := max(m.innerHeight-lipgloss.Height(headerContent)-4, 3)
-	maxOffset := max(len(lines)-viewportHeight, 0)
-	if m.scrollOffset > maxOffset {
-		m.scrollOffset = maxOffset
-	}
+	footerHeight := lipgloss.Height(m.renderHelpFooter(width))
+	viewportHeight := max(m.innerHeight-lipgloss.Height(headerContent)-footerHeight-5, 3)
+	m.scrollOffset = clampScrollOffset(m.scrollOffset, len(lines), viewportHeight)
 
 	end := min(m.scrollOffset+viewportHeight, len(lines))
 	visible := lines[m.scrollOffset:end]
@@ -31,6 +30,11 @@ func (m *Model) renderScrollableContent(content string, width int, headerContent
 	contentPane := lipgloss.NewStyle().Width(width).Height(viewportHeight).Render(strings.Join(visible, "\n"))
 	scrollbar := m.renderScrollbar(len(lines), viewportHeight)
 	return lipgloss.JoinHorizontal(lipgloss.Top, contentPane, " ", scrollbar)
+}
+
+func clampScrollOffset(offset, totalLines, viewportHeight int) int {
+	maxOffset := max(totalLines-viewportHeight, 0)
+	return min(max(offset, 0), maxOffset)
 }
 
 func (m Model) renderScrollbar(totalLines, viewportHeight int) string {
@@ -49,7 +53,8 @@ func (m Model) renderScrollbar(totalLines, viewportHeight int) string {
 
 	thumbHeight := max(viewportHeight*viewportHeight/max(totalLines, 1), 1)
 	maxOffset := max(totalLines-viewportHeight, 1)
-	thumbTop := (viewportHeight - thumbHeight) * m.scrollOffset / maxOffset
+	scrollOffset := clampScrollOffset(m.scrollOffset, totalLines, viewportHeight)
+	thumbTop := (viewportHeight - thumbHeight) * scrollOffset / maxOffset
 
 	lines := make([]string, viewportHeight)
 	for i := range lines {

@@ -180,7 +180,7 @@ func (m Markdown) renderLine(line string) string {
 	}
 
 	if matches := headingPattern.FindStringSubmatch(line); matches != nil {
-		return m.HeadingMarker.Render(matches[1]) + matches[2] + m.renderInline(matches[3], m.HeadingText)
+		return m.renderHeading(matches[1], matches[2], matches[3])
 	}
 
 	if matches := unorderedListPattern.FindStringSubmatch(line); matches != nil {
@@ -192,6 +192,16 @@ func (m Markdown) renderLine(line string) string {
 	}
 
 	return m.renderInline(line, m.Text)
+}
+
+func (m Markdown) renderHeading(marker, spacing, text string) string {
+	heading := m.HeadingMarker.Render(marker) + spacing + m.renderInline(text, m.HeadingText)
+	if len(marker) > 2 {
+		return heading
+	}
+
+	underline := m.Rule.Render(strings.Repeat("─", max(1, m.Width)))
+	return heading + "\n" + underline
 }
 
 func (m Markdown) renderQuoteBlock(lines []string) string {
