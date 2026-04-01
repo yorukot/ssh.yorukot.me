@@ -1,8 +1,10 @@
 package internal
 
 import (
-	"charm.land/bubbles/v2/help"
-	contentpkg "github.com/yorukot/ssh.yorukot.me/content"
+	"charm.land/bubbles/v2/viewport"
+	"github.com/yorukot/ssh.yorukot.me/content"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
+	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
 )
 
 type Model struct {
@@ -11,26 +13,16 @@ type Model struct {
 	innerWidth   int
 	innerHeight  int
 	scrollOffset int
-	contentWidth int
-	help         help.Model
-	keys         keyMap
-	profile      string
-	bg           string
-	path         string
-	rawMarkdown  string
-	renderedBody string
-	wrappedLines []string
+	keys         keymap.Bindings
 
-	footerQuoteIndex    int
-	footerQuoteDeleting bool
-	footerQuotePause    int
-	footerCursorVisible bool
-	blogPosts           []contentpkg.BlogPost
-	blogIndex           int
-	blogLineOffsets     []int
+	path string
 
-	// cached relate
-	cachedPath  string
-	cachedBg    string
-	cachedWidth int
+	bg string
+
+	colorProfile string
+
+	blogs []content.BlogPost
+
+	main   viewport.Model
+	header header.Model
 }

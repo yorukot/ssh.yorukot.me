@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/adrg/frontmatter"
-	"github.com/yorukot/ssh.yorukot.me/pkg/pathutil"
 )
 
 type BlogPost struct {
@@ -21,51 +20,11 @@ type BlogPost struct {
 	UpdatedDate string   `yaml:"updated_date"`
 	Description string   `yaml:"description"`
 	Path        string
+	Content     string
+	RenderedContent string
 }
 
-func MarkdownContent(path string) (string, error) {
-	normalizedPath := pathutil.NormalizePath(path)
-
-	baseDir := filepath.Join("content", "markdown")
-	cleanPath := strings.Trim(normalizedPath, "/")
-
-	searchDir := baseDir
-	if cleanPath != "" {
-		searchDir = filepath.Join(baseDir, filepath.FromSlash(cleanPath))
-	}
-
-	entries, err := os.ReadDir(searchDir)
-	if err != nil {
-		return "", err
-	}
-
-	var mdFiles []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		if filepath.Ext(entry.Name()) != ".md" {
-			continue
-		}
-
-		mdFiles = append(mdFiles, entry.Name())
-	}
-
-	if len(mdFiles) == 0 {
-		return "", errors.New("no markdown file found")
-	}
-
-	sort.Strings(mdFiles)
-
-	content, err := os.ReadFile(filepath.Join(searchDir, mdFiles[0]))
-	if err != nil {
-		return "", err
-	}
-
-	return string(content), nil
-}
-
+// BlogPosts get all the blog posts and return it
 func BlogPosts() ([]BlogPost, error) {
 	baseDir := filepath.Join("content", "markdown", "blog")
 	entries, err := os.ReadDir(baseDir)
@@ -79,7 +38,8 @@ func BlogPosts() ([]BlogPost, error) {
 			continue
 		}
 
-		post, err := loadBlogPost(filepath.Join(baseDir, entry.Name()), entry.Name())
+		blogPath := filepath.Join(baseDir, entry.Name())
+		post, err := loadBlogPost(blogPath, entry.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -104,6 +64,7 @@ func BlogPosts() ([]BlogPost, error) {
 	return posts, nil
 }
 
+// loadBlogPost load the blog base on the dir and return the BlogPost data
 func loadBlogPost(dir, slug string) (BlogPost, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -129,29 +90,24 @@ func loadBlogPost(dir, slug string) (BlogPost, error) {
 		return BlogPost{}, err
 	}
 
-	post := BlogPost{
-		Title: slug,
-		Path:  "/blog/" + slug,
-	}
-
-	_, metadata, err := parseBlogFrontMatter(body)
+	_, post, err := parseBlogFrontMatter(body)
 	if err != nil {
 		return BlogPost{}, err
 	}
 
-	if strings.TrimSpace(metadata.Title) == "" {
-		return BlogPost{}, errors.New("missing required front matter field: title")
-	}
-
-	post.Title = metadata.Title
-	post.Description = metadata.Description
-	post.PublishDate = metadata.PublishDate
-
-	if post.Description == "" {
-		post.Description = "A new post in the blog archive."
-	}
-
+	post.Content = string(body)
+	post.Path = "/blog/" + slug
+	
 	return post, nil
+}
+
+func FindPost(blogPosts[]BlogPost, slug string) (BlogPost, error) {
+	for _, post := range blogPosts {
+		if post.Path == slug {
+			return post, nil
+		}
+	}
+	return BlogPost{}, errors.New("blog post not found")
 }
 
 func parseBlogFrontMatter(body []byte) ([]byte, BlogPost, error) {

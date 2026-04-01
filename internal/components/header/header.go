@@ -3,12 +3,11 @@ package header
 import (
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/content"
-	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
 	"strings"
 )
 
-type Header struct {
+type Model struct {
 	title   string
 	tagline string
 	path    string
@@ -16,19 +15,20 @@ type Header struct {
 	bg      string
 }
 
-func New(w int, bg, path string) Header {
+func New(w int, bg, path string) Model {
 	data := content.GetContent()
-
-	return Header{
+	
+	return Model{
 		title:   data.HeaderTitle,
 		tagline: data.HeaderTagline,
 		path:    path,
-		width:   w - constants.HeaderFrameInset,
+		// We need to * 2 for the both side
+		width:   w - styles.InnerBoxPaddingSide * 2, 
 		bg:      bg,
 	}
 }
 
-func (h Header) Render() string {
+func (h Model) Render() string {
 	route := h.path
 	if strings.TrimSpace(route) == "" {
 		route = "/"
