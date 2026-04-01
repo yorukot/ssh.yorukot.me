@@ -1,8 +1,10 @@
 ---
-authors: elvismao
+title: 特殊選才備審資料／學習歷程檔案怎麼做？
+authors: [elvismao]
 tags: [特殊選才]
 categories: [生活雜談]
-date: 2025-02-23
+publish_date: 2025-02-23
+updated_date: 2025-04-01
 description: 好的備審能讓你的努力和特質被看見，甚至錄取超出你預期的學校。
 ---
 

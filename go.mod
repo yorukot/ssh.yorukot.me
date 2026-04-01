@@ -3,13 +3,16 @@ module github.com/yorukot/ssh.yorukot.me
 go 1.25.8
 
 require (
+	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.2
 	github.com/alecthomas/chroma/v2 v2.23.1
 )
 
 require (
-	charm.land/bubbles/v2 v2.1.0 // indirect
+	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/adrg/frontmatter v0.2.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
 require (
@@ -21,7 +24,7 @@ require (
 	github.com/charmbracelet/keygen v0.5.4 // indirect
 	github.com/charmbracelet/ssh v0.0.0-20250826160808-ebfa259c7309
 	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 // indirect
-	github.com/charmbracelet/x/ansi v0.11.6 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6
 	github.com/charmbracelet/x/conpty v0.1.1 // indirect
 	github.com/charmbracelet/x/errors v0.0.0-20251110184232-6ab307057ac7 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect

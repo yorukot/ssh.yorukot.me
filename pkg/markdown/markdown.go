@@ -7,6 +7,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/yorukot/ssh.yorukot.me/pkg/ansi"
 )
 
 const minWidth = 24
@@ -284,7 +285,7 @@ func (m Markdown) renderLink(token string) string {
 	}
 
 	visible := m.LinkLabel.Render("[" + label + "]")
-	return osc8Link(url, visible)
+	return ansi.OSC8Link(url, visible)
 }
 
 func (m Markdown) renderHighlightedCode(code, language string) string {
@@ -325,12 +326,4 @@ func fallbackLanguage(language string) string {
 		return "text"
 	}
 	return language
-}
-
-func osc8Link(url, label string) string {
-	if strings.TrimSpace(url) == "" {
-		return label
-	}
-
-	return "\x1b]8;;" + url + "\x07" + label + "\x1b]8;;\x07"
 }

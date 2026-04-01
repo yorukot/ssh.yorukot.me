@@ -1,22 +1,16 @@
 package internal
 
 import (
-	"fmt"
-	"strings"
-
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/ssh"
-	contentpkg "github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
+	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
-	markdownpkg "github.com/yorukot/ssh.yorukot.me/pkg/markdown"
 	"github.com/yorukot/ssh.yorukot.me/pkg/pathutil"
 )
-
-const mouseWheelStep = 3
 
 // You can wire any Bubble Tea model up to the middleware with a function that
 // handles the incoming ssh.Session. Here we just grab the terminal info and
@@ -30,13 +24,17 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	}
 
 	m := Model{
-		width:  pty.Window.Width,
-		height: pty.Window.Height,
-		bg:     "light",
-		help:   help.New(),
-		keys:   newKeyMap(),
-		path:   requestPath,
+		width:       pty.Window.Width,
+		height:      pty.Window.Height,
+		innerWidth:  min(pty.Window.Width, constants.MaxContentWidth),
+		innerHeight: pty.Window.Height,
+		bg:          "light",
+		help:        help.New(),
+		keys:        newKeyMap(),
+		path:        requestPath,
 	}
+	m.contentWidth = max(m.innerWidth-constants.ContentWidthInset, constants.MinContentWidth)
+	m.help.SetWidth(max(m.innerWidth-constants.HelpWidthInset, constants.MinScrollOffset))
 	return &m, []tea.ProgramOption{}
 }
 
@@ -44,6 +42,7 @@ func (m *Model) Init() tea.Cmd {
 	// default values
 	return tea.Batch(
 		tea.RequestBackgroundColor,
+		footerQuoteTickCmd(),
 	)
 }
 
@@ -56,73 +55,75 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.bg = "dark"
 		}
 		m.setHelpStyle()
+	case footerQuoteTickMsg:
+		m.updateFooterQuote()
+		return m, footerQuoteTickCmd()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
 		m.innerHeight = m.height
-		m.innerWidth = min(m.width, 82)
-		m.help.SetWidth(max(m.innerWidth-2, 0))
+		m.innerWidth = min(m.width, constants.MaxContentWidth)
+		m.contentWidth = max(m.innerWidth-constants.ContentWidthInset, constants.MinContentWidth)
+		m.help.SetWidth(max(m.innerWidth-constants.HelpWidthInset, constants.MinScrollOffset))
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Up):
-			m.scrollBy(-1)
+			m.moveBlogSelection(-1)
 		case key.Matches(msg, m.keys.Down):
-			m.scrollBy(1)
-		case key.Matches(msg, m.keys.PageUp):
-			m.scrollBy(-max(m.contentViewportHeight()-1, 1))
-		case key.Matches(msg, m.keys.PageDown):
-			m.scrollBy(max(m.contentViewportHeight()-1, 1))
-		case key.Matches(msg, m.keys.Home):
-			m.scrollOffset = 0
-		case key.Matches(msg, m.keys.End):
-			m.scrollOffset = 1 << 30
+			m.moveBlogSelection(1)
+		case key.Matches(msg, m.keys.Back):
+			m.navigateBack()
+		case key.Matches(msg, m.keys.Enter):
+			m.openSelectedBlog()
 		}
 	case tea.MouseWheelMsg:
 		switch msg.Button {
 		case tea.MouseWheelUp:
-			m.scrollBy(-mouseWheelStep)
+			if m.isBlogIndex() {
+				m.moveBlogSelection(-1)
+			} else {
+				m.scrollBy(-constants.MouseWheelStep)
+			}
 		case tea.MouseWheelDown:
-			m.scrollBy(mouseWheelStep)
+			if m.isBlogIndex() {
+				m.moveBlogSelection(1)
+			} else {
+				m.scrollBy(constants.MouseWheelStep)
+			}
 		}
 	}
 	return m, nil
 }
 
 func (m *Model) View() tea.View {
-	h := header.New(m.innerWidth, m.innerHeight)
+	h := header.New(m.innerWidth, m.bg, m.path)
 	headerContent := h.Render()
+	contentWidth := max(m.innerWidth-constants.ContentWidthInset, constants.MinContentWidth)
+	m.contentWidth = contentWidth
 
-	markdownContent, err := contentpkg.MarkdownContent(m.path)
-	if err != nil {
-		markdownContent = fmt.Sprintf("\n\nfailed to load markdown for %s\n\n%s", m.path, err)
-	}
-
-	contentWidth := max(m.innerWidth-5, 20)
-	markdownContent = markdownpkg.New(contentWidth, m.bg).Render(markdownContent)
-	contentView := m.renderScrollableContent(strings.TrimSpace(markdownContent), contentWidth, headerContent)
+	m.cached(contentWidth)
 	helpView := m.renderHelpFooter(contentWidth)
+	contentView := m.renderScrollableContent(contentWidth, headerContent, helpView)
 	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, "", contentView, "", helpView)
 	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)
 
 	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)
 	v := tea.NewView(final)
 	v.AltScreen = true
-	v.MouseMode = tea.MouseModeCellMotion
 	return v
 }
 
 func (m *Model) scrollBy(delta int) {
-	m.scrollOffset = max(m.scrollOffset+delta, 0)
+	m.scrollOffset = max(m.scrollOffset+delta, constants.MinScrollOffset)
 }
 
 func (m *Model) renderHelpFooter(width int) string {
 	m.setHelpStyle()
 	m.help.SetWidth(width)
 
-	footer := m.help.View(m.keys)
-	return lipgloss.NewStyle().Width(width).Render(footer)
+	return lipgloss.NewStyle().Width(width).Render(m.help.View(m.keys))
 }
 
 func (m *Model) setHelpStyle() {

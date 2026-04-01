@@ -5,20 +5,20 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
+	"github.com/yorukot/ssh.yorukot.me/internal/constants"
+	"github.com/yorukot/ssh.yorukot.me/internal/styles"
 )
 
 func (m *Model) contentViewportHeight() int {
-	headerHeight := lipgloss.Height(header.New(m.innerWidth, m.innerHeight).Render())
-	footerHeight := lipgloss.Height(m.renderHelpFooter(max(m.innerWidth-5, 20)))
-	return max(m.innerHeight-headerHeight-footerHeight-5, 3)
+	headerHeight := lipgloss.Height(header.New(m.innerWidth, m.bg, m.path).Render())
+	helpHeight := lipgloss.Height(m.renderHelpFooter(max(m.innerWidth-constants.ContentWidthInset, constants.MinContentWidth)))
+	return max(m.innerHeight-headerHeight-helpHeight-constants.LayoutVerticalSpacing, constants.MinViewportHeight)
 }
 
-func (m *Model) renderScrollableContent(content string, width int, headerContent string) string {
-	contentStyle := lipgloss.NewStyle().Width(width)
-	wrapped := contentStyle.Render(content)
-	lines := strings.Split(wrapped, "\n")
-	footerHeight := lipgloss.Height(m.renderHelpFooter(width))
-	viewportHeight := max(m.innerHeight-lipgloss.Height(headerContent)-footerHeight-5, 3)
+func (m *Model) renderScrollableContent(width int, headerContent, helpView string) string {
+	lines := m.wrappedLines
+	footerHeight := lipgloss.Height(helpView)
+	viewportHeight := max(m.innerHeight-lipgloss.Height(headerContent)-footerHeight-constants.LayoutVerticalSpacing, constants.MinViewportHeight)
 	m.scrollOffset = clampScrollOffset(m.scrollOffset, len(lines), viewportHeight)
 
 	end := min(m.scrollOffset+viewportHeight, len(lines))
@@ -29,30 +29,26 @@ func (m *Model) renderScrollableContent(content string, width int, headerContent
 
 	contentPane := lipgloss.NewStyle().Width(width).Height(viewportHeight).Render(strings.Join(visible, "\n"))
 	scrollbar := m.renderScrollbar(len(lines), viewportHeight)
+	if scrollbar == "" {
+		return contentPane
+	}
 	return lipgloss.JoinHorizontal(lipgloss.Top, contentPane, " ", scrollbar)
 }
 
 func clampScrollOffset(offset, totalLines, viewportHeight int) int {
-	maxOffset := max(totalLines-viewportHeight, 0)
-	return min(max(offset, 0), maxOffset)
+	maxOffset := max(totalLines-viewportHeight, constants.MinScrollOffset)
+	return min(max(offset, constants.MinScrollOffset), maxOffset)
 }
 
 func (m Model) renderScrollbar(totalLines, viewportHeight int) string {
-	trackColor := "240"
-	thumbColor := "252"
-	if m.bg == "light" {
-		trackColor = "252"
-		thumbColor = "240"
+	track := styles.ScrollbarTrack(m.bg)
+	thumb := styles.ScrollbarThumb(m.bg)
+	if totalLines <= viewportHeight || viewportHeight <= constants.MinScrollOffset {
+		return ""
 	}
 
-	track := lipgloss.NewStyle().Foreground(lipgloss.Color(trackColor))
-	thumb := lipgloss.NewStyle().Foreground(lipgloss.Color(thumbColor)).Bold(true)
-	if totalLines <= viewportHeight || viewportHeight <= 0 {
-		return lipgloss.NewStyle().Height(max(viewportHeight, 1)).Render(track.Render("│"))
-	}
-
-	thumbHeight := max(viewportHeight*viewportHeight/max(totalLines, 1), 1)
-	maxOffset := max(totalLines-viewportHeight, 1)
+	thumbHeight := max(viewportHeight*viewportHeight/max(totalLines, constants.MinScrollbarHeight), constants.MinScrollbarHeight)
+	maxOffset := max(totalLines-viewportHeight, constants.MinScrollbarOffset)
 	scrollOffset := clampScrollOffset(m.scrollOffset, totalLines, viewportHeight)
 	thumbTop := (viewportHeight - thumbHeight) * scrollOffset / maxOffset
 
