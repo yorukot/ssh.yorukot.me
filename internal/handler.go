@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
@@ -42,7 +43,8 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 		path: requestPath,
 
-		blogs: blogPosts,
+		blogs:    blogPosts,
+		markdown: mkrender.New(),
 	}
 
 	m.header = header.New(m.innerWidth, m.bg, m.path)

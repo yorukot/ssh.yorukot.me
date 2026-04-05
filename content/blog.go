@@ -12,15 +12,15 @@ import (
 )
 
 type BlogPost struct {
-	Title       string   `yaml:"title"`
-	Authors     []string `yaml:"authors"`
-	Tags        []string `yaml:"tags"`
-	Categories  []string `yaml:"categories"`
-	PublishDate string   `yaml:"date"`
-	UpdatedDate string   `yaml:"updated_date"`
-	Description string   `yaml:"description"`
-	Path        string
-	Content     string
+	Title           string   `yaml:"title"`
+	Authors         []string `yaml:"authors"`
+	Tags            []string `yaml:"tags"`
+	Categories      []string `yaml:"categories"`
+	PublishDate     string   `yaml:"publish_date"`
+	UpdatedDate     string   `yaml:"updated_date"`
+	Description     string   `yaml:"description"`
+	Path            string
+	Content         string
 	RenderedContent string
 }
 
@@ -90,18 +90,18 @@ func loadBlogPost(dir, slug string) (BlogPost, error) {
 		return BlogPost{}, err
 	}
 
-	_, post, err := parseBlogFrontMatter(body)
+	rest, post, err := parseBlogFrontMatter(body)
 	if err != nil {
 		return BlogPost{}, err
 	}
 
-	post.Content = string(body)
+	post.Content = strings.TrimLeft(string(rest), "\n")
 	post.Path = "/blog/" + slug
-	
+
 	return post, nil
 }
 
-func FindPost(blogPosts[]BlogPost, slug string) (BlogPost, error) {
+func FindPost(blogPosts []BlogPost, slug string) (BlogPost, error) {
 	for _, post := range blogPosts {
 		if post.Path == slug {
 			return post, nil

@@ -5,6 +5,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
@@ -25,15 +26,16 @@ type Model struct {
 
 	blogs []content.BlogPost
 
-	ready  bool
-	main   viewport.Model
-	header header.Model
+	ready    bool
+	main     viewport.Model
+	header   header.Model
+	markdown mkrender.Renderer
 }
 
 func (m *Model) contentWidth() int {
 	availableWidth := m.innerWidth - styles.InnerBoxPaddingSide*2
 	if m.isBlogPost() {
-		availableWidth -= constants.ScrollbarGap + constants.ScrollbarWidth 
+		availableWidth -= constants.ScrollbarGap + constants.ScrollbarWidth
 	}
 
 	return max(availableWidth, constants.MinContentWidth)

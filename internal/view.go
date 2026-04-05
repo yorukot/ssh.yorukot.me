@@ -36,7 +36,10 @@ func (m *Model) syncViewport() {
 
 	contentWidth := m.contentWidth()
 	contentHeight := m.contentHeight()
-	wrappedContent := lipgloss.Wrap(post.Content, contentWidth, "")
+	renderedContent, err := m.markdown.Render(post.Content, contentWidth, m.bg)
+	if err != nil {
+		renderedContent = lipgloss.Wrap(post.Content, contentWidth, "")
+	}
 
 	if !m.ready {
 		m.main = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
@@ -51,8 +54,8 @@ func (m *Model) syncViewport() {
 		m.main.SetHeight(contentHeight)
 	}
 
-	if m.main.GetContent() != wrappedContent {
-		m.main.SetContent(wrappedContent)
+	if m.main.GetContent() != renderedContent {
+		m.main.SetContent(renderedContent)
 	}
 }
 
