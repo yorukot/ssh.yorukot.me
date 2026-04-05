@@ -5,5 +5,7 @@ const (
 
 	MaxContentWidth = 100
 	MinContentWidth = 20
-)
 
+	ScrollbarWidth = 1
+	ScrollbarGap   = 1
+)
