@@ -74,10 +74,11 @@ type CodeBlockStyle struct {
 }
 
 type TableStyle struct {
-	Container lipgloss.Style
-	Header    lipgloss.Style
-	Cell      lipgloss.Style
-	Border    lipgloss.Style
+	Container   lipgloss.Style
+	Header      lipgloss.Style
+	Cell        lipgloss.Style
+	Border      lipgloss.Border
+	BorderStyle lipgloss.Style
 }
 
 func (r Renderer) renderTable(node *extast.Table, source []byte, width int) string {
@@ -117,14 +118,23 @@ func (r Renderer) renderTable(node *extast.Table, source []byte, width int) stri
 		}
 	}
 
-	horizontal := make([]string, 0, maxCols)
-	for _, w := range colWidths {
-		horizontal = append(horizontal, strings.Repeat("-", max(3, w+2)))
+	border := r.Content.Table.Border
+	borderStyle := r.Content.Table.BorderStyle
+	renderBorder := func(value string) string {
+		return borderStyle.Render(value)
+	}
+	joinBorder := func(left string, fill string, middle string, right string) string {
+		parts := make([]string, 0, maxCols)
+		for _, w := range colWidths {
+			parts = append(parts, strings.Repeat(fill, max(3, w+2)))
+		}
+		return renderBorder(left + strings.Join(parts, middle) + right)
 	}
 
-	border := r.Content.Table.Border
-	separator := border.Render("+" + strings.Join(horizontal, "+") + "+")
-	lines := []string{separator}
+	top := joinBorder(border.TopLeft, border.Top, border.MiddleTop, border.TopRight)
+	middle := joinBorder(border.MiddleLeft, border.Top, border.Middle, border.MiddleRight)
+	bottom := joinBorder(border.BottomLeft, border.Bottom, border.MiddleBottom, border.BottomRight)
+	lines := []string{top}
 
 	for rowIndex, row := range rows {
 		parts := make([]string, 0, maxCols)
@@ -136,9 +146,12 @@ func (r Renderer) renderTable(node *extast.Table, source []byte, width int) stri
 			}
 			parts = append(parts, " "+styled+" ")
 		}
-		lines = append(lines, border.Render("|")+strings.Join(parts, border.Render("|"))+border.Render("|"))
-		if rowIndex == 0 || rowIndex == len(rows)-1 {
-			lines = append(lines, separator)
+		lines = append(lines, renderBorder(border.Left)+strings.Join(parts, renderBorder(border.Left))+renderBorder(border.Right))
+		if rowIndex == 0 {
+			lines = append(lines, middle)
+		}
+		if rowIndex == len(rows)-1 {
+			lines = append(lines, bottom)
 		}
 	}
 

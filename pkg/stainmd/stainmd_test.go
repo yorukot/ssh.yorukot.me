@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	xansi "github.com/charmbracelet/x/ansi"
 )
 
@@ -156,6 +157,36 @@ func TestRenderTable(t *testing.T) {
 	for _, want := range checks {
 		if !strings.Contains(plain, want) {
 			t.Fatalf("expected table output to contain %q, got:\n%s", want, out)
+		}
+	}
+}
+
+func TestRenderTableWithCustomBorder(t *testing.T) {
+	renderer := New()
+	renderer.Content.Table.Border = lipgloss.ThickBorder()
+
+	input := strings.Join([]string{
+		"| Name | Status |",
+		"| --- | --- |",
+		"| Links | Ready |",
+	}, "\n")
+
+	out, err := renderer.Render(input, 80)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	plain := stripANSI(out)
+	checks := []string{
+		"┏",
+		"┃ Name",
+		"┣",
+		"┗",
+	}
+
+	for _, want := range checks {
+		if !strings.Contains(plain, want) {
+			t.Fatalf("expected custom table output to contain %q, got:\n%s", want, out)
 		}
 	}
 }
