@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/yuin/goldmark/ast"
@@ -83,7 +84,6 @@ type TableStyle struct {
 
 func (r Renderer) renderTable(node *extast.Table, source []byte, width int) string {
 	rows := make([][]string, 0, node.ChildCount())
-	maxCols := 0
 
 	for rowNode := node.FirstChild(); rowNode != nil; rowNode = rowNode.NextSibling() {
 		var cells []string
@@ -97,65 +97,41 @@ func (r Renderer) renderTable(node *extast.Table, source []byte, width int) stri
 			continue
 		}
 
-		maxCols = max(maxCols, len(cells))
 		rows = append(rows, cells)
 	}
 
-	if len(rows) == 0 || maxCols == 0 {
+	if len(rows) == 0 || len(rows[0]) == 0 {
 		return ""
 	}
 
-	for i := range rows {
-		for len(rows[i]) < maxCols {
-			rows[i] = append(rows[i], "")
-		}
+	headers := append([]string(nil), rows[0]...)
+	body := make([][]string, 0, len(rows)-1)
+	for _, row := range rows[1:] {
+		body = append(body, append([]string(nil), row...))
 	}
 
-	colWidths := make([]int, maxCols)
-	for _, row := range rows {
-		for i, cell := range row {
-			colWidths[i] = max(colWidths[i], lipgloss.Width(stripANSI(cell)))
-		}
-	}
-
-	border := r.Content.Table.Border
-	borderStyle := r.Content.Table.BorderStyle
-	renderBorder := func(value string) string {
-		return borderStyle.Render(value)
-	}
-	joinBorder := func(left string, fill string, middle string, right string) string {
-		parts := make([]string, 0, maxCols)
-		for _, w := range colWidths {
-			parts = append(parts, strings.Repeat(fill, max(3, w+2)))
-		}
-		return renderBorder(left + strings.Join(parts, middle) + right)
-	}
-
-	top := joinBorder(border.TopLeft, border.Top, border.MiddleTop, border.TopRight)
-	middle := joinBorder(border.MiddleLeft, border.Top, border.Middle, border.MiddleRight)
-	bottom := joinBorder(border.BottomLeft, border.Bottom, border.MiddleBottom, border.BottomRight)
-	lines := []string{top}
-
-	for rowIndex, row := range rows {
-		parts := make([]string, 0, maxCols)
-		for colIndex, cell := range row {
-			padded := lipgloss.NewStyle().Width(colWidths[colIndex]).Render(cell)
-			styled := r.Content.Table.Cell.Render(padded)
-			if rowIndex == 0 {
-				styled = r.Content.Table.Header.Render(padded)
+	tbl := table.New().
+		Headers(headers...).
+		Rows(body...).
+		Width(max(width, 1)).
+		Wrap(true).
+		Border(r.Content.Table.Border).
+		BorderStyle(r.Content.Table.BorderStyle).
+		BorderTop(true).
+		BorderBottom(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderColumn(true).
+		BorderHeader(true).
+		BorderRow(false).
+		StyleFunc(func(row, _ int) lipgloss.Style {
+			if row == table.HeaderRow {
+				return r.Content.Table.Header
 			}
-			parts = append(parts, " "+styled+" ")
-		}
-		lines = append(lines, renderBorder(border.Left)+strings.Join(parts, renderBorder(border.Left))+renderBorder(border.Right))
-		if rowIndex == 0 {
-			lines = append(lines, middle)
-		}
-		if rowIndex == len(rows)-1 {
-			lines = append(lines, bottom)
-		}
-	}
+			return r.Content.Table.Cell
+		})
 
-	return r.Content.Table.Container.Render(strings.Join(lines, "\n"))
+	return r.Content.Table.Container.Render(tbl.Render())
 }
 
 func (r Renderer) renderTableCells(row ast.Node, source []byte) []string {

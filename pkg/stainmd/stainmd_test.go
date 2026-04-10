@@ -148,8 +148,9 @@ func TestRenderTable(t *testing.T) {
 	plain := stripANSI(out)
 	checks := []string{
 		"+",
-		"| Name",
-		"Status |",
+		"|",
+		"Name",
+		"Status",
 		"Links",
 		"Tables",
 	}
@@ -179,7 +180,8 @@ func TestRenderTableWithCustomBorder(t *testing.T) {
 	plain := stripANSI(out)
 	checks := []string{
 		"┏",
-		"┃ Name",
+		"┃",
+		"Name",
 		"┣",
 		"┗",
 	}
@@ -188,6 +190,44 @@ func TestRenderTableWithCustomBorder(t *testing.T) {
 		if !strings.Contains(plain, want) {
 			t.Fatalf("expected custom table output to contain %q, got:\n%s", want, out)
 		}
+	}
+}
+
+func TestRenderTableWrapsLongCells(t *testing.T) {
+	renderer := New()
+
+	input := strings.Join([]string{
+		"| Name | Description |",
+		"| --- | --- |",
+		"| Links | This table cell should wrap instead of getting clipped by the viewport |",
+	}, "\n")
+
+	out, err := renderer.Render(input, 32)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	plain := stripANSI(out)
+	checks := []string{
+		"This table",
+		"cell",
+		"should",
+		"wrap",
+		"instead",
+		"viewport",
+	}
+
+	for _, want := range checks {
+		if !strings.Contains(plain, want) {
+			t.Fatalf("expected wrapped table output to contain %q, got:\n%s", want, out)
+		}
+	}
+
+	if strings.Contains(plain, "This table cell should wrap instead of getting clipped by the viewport |") {
+		t.Fatalf("expected long table cell to wrap, got:\n%s", out)
+	}
+	if strings.Count(plain, "\n") < 6 {
+		t.Fatalf("expected wrapped table row to span multiple lines, got:\n%s", out)
 	}
 }
 

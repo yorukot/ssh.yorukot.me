@@ -89,7 +89,7 @@ func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
 		endContent := endsection.New(width, m.bg).Render()
 		return lipgloss.JoinVertical(lipgloss.Left, content, "", endContent)
 	}
-
+	
 	if m.path == "/blog" {
 		content, metrics := blogindex.Render(m.blogs, width, m.selectedBlog, m.bg)
 		return appendEndSection(content), metrics
