@@ -31,7 +31,10 @@ func (r Renderer) Render(markdown string, width int) (string, error) {
 
 	source := []byte(markdown)
 	doc := goldmark.New(
-		goldmark.WithExtensions(extension.Table),
+		goldmark.WithExtensions(
+			extension.Table,
+			extension.Strikethrough,
+		),
 	).Parser().Parse(text.NewReader(source))
 	body := r.renderBlocks(doc, source, width)
 	return r.Document.Container.Render(body), nil
@@ -55,7 +58,8 @@ func (r Renderer) renderBlock(node ast.Node, source []byte, width int) string {
 	switch n := node.(type) {
 	case *ast.Heading:
 		text := r.renderInlineChildren(n, source)
-		return r.headingStyle(n.Level).Render(wrapText(text, width))
+		prefix := strings.Repeat("#", n.Level) + " "
+		return r.headingStyle(n.Level).Render(wrapText(prefix+text, width))
 	case *ast.Paragraph:
 		return r.Content.Paragraph.Render(wrapText(r.renderInlineChildren(n, source), width))
 	case *ast.TextBlock:

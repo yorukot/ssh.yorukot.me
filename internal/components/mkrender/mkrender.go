@@ -1,6 +1,8 @@
 package mkrender
 
-import "github.com/charmbracelet/glamour"
+import (
+	"github.com/yorukot/ssh.yorukot.me/pkg/stainmd"
+)
 
 type Renderer struct{}
 
@@ -13,19 +15,10 @@ func (Renderer) Render(markdown string, width int, bg string) (string, error) {
 		width = 1
 	}
 
-	style := glamour.DarkStyle
+	renderer := stainmd.MochaStyles()
 	if bg == "light" {
-		style = glamour.LightStyle
+		renderer = stainmd.LatteStyles()
 	}
 
-	renderer, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle(style),
-		glamour.WithWordWrap(width),
-		glamour.WithPreservedNewLines(),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return renderer.Render(markdown)
+	return renderer.Render(markdown, width)
 }

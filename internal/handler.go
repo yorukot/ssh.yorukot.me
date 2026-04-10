@@ -81,9 +81,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		}
-	case tea.MouseWheelMsg:
-		switch msg.Button {
-		}
 	}
 
 	m.main, cmd = m.main.Update(msg)
@@ -107,6 +104,5 @@ func (m *Model) View() tea.View {
 
 	v := tea.NewView(final)
 	v.AltScreen = true
-	v.MouseMode = tea.MouseModeCellMotion
 	return v
 }

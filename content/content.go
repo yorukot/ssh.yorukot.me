@@ -26,3 +26,8 @@ func GetContent() Content {
 		},
 	}
 }
+
+func HomePage() string {
+	
+	return ""
+}
