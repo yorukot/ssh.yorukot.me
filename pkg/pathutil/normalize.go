@@ -8,5 +8,10 @@ func NormalizePath(path string) string {
 		return "/"
 	}
 
-	return "/" + strings.TrimLeft(trimmedPath, "/")
+	normalized := "/" + strings.Trim(trimmedPath, "/")
+	if normalized == "" {
+		return "/"
+	}
+
+	return normalized
 }

@@ -94,8 +94,12 @@ func (m *Model) View() tea.View {
 	scrollbarView := m.scrollbarView()
 
 	var body string
-	gap := lipgloss.NewStyle().Width(constants.ScrollbarGap).Render("")
-	body = lipgloss.JoinHorizontal(lipgloss.Top, mainView, gap, scrollbarView)
+	if scrollbarView == "" {
+		body = mainView
+	} else {
+		gap := lipgloss.NewStyle().Width(constants.ScrollbarGap).Render("")
+		body = lipgloss.JoinHorizontal(lipgloss.Top, mainView, gap, scrollbarView)
+	}
 
 	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, body)
 	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)

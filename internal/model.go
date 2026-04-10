@@ -34,7 +34,7 @@ type Model struct {
 
 func (m *Model) contentWidth() int {
 	availableWidth := m.innerWidth - styles.InnerBoxPaddingSide*2
-	if m.isBlogPost() {
+	if m.hasScrollbar() {
 		availableWidth -= constants.ScrollbarGap + constants.ScrollbarWidth
 	}
 

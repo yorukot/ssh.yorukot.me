@@ -6,7 +6,6 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
@@ -24,21 +23,13 @@ func (m *Model) windowsSizeChange(msg tea.WindowSizeMsg) {
 }
 
 func (m *Model) syncViewport() {
-	// TODO: we need to update this since we are not going to only use scroll bar in the blog content
-	if !m.isBlogPost() {
-		return
-	}
-
-	post, err := content.FindPost(m.blogs, m.path)
-	if err != nil {
-		return
-	}
-
 	contentWidth := m.contentWidth()
 	contentHeight := m.contentHeight()
-	renderedContent, err := m.markdown.Render(post.Content, contentWidth, m.bg)
+	pageContent := m.pageContent()
+	// we need to make this cache
+	renderedContent, err := m.markdown.Render(pageContent, contentWidth, m.bg)
 	if err != nil {
-		renderedContent = lipgloss.Wrap(post.Content, contentWidth, "")
+		renderedContent = lipgloss.Wrap(pageContent, contentWidth, "")
 	}
 
 	if !m.ready {
@@ -59,7 +50,14 @@ func (m *Model) syncViewport() {
 	}
 }
 
+func (m *Model) hasScrollbar() bool {
+	total := max(m.main.TotalLineCount(), 1)
+	visible := max(m.main.VisibleLineCount(), 1)
+	return total > visible
+}	
+
 func (m *Model) scrollbarView() string {
+
 	h := m.main.Height()
 	if h <= 0 {
 		return ""
@@ -67,6 +65,10 @@ func (m *Model) scrollbarView() string {
 
 	total := max(m.main.TotalLineCount(), 1)
 	visible := max(m.main.VisibleLineCount(), 1)
+	if total <= visible {
+		return ""
+	}
+	
 	thumbHeight := max(1, visible*h/total)
 	maxTop := max(0, h-thumbHeight)
 	top := int(m.main.ScrollPercent() * float64(maxTop))
