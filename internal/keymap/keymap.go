@@ -22,11 +22,11 @@ func New() Bindings {
 		),
 		Back: key.NewBinding(
 			key.WithKeys("backspace", "left"),
-			key.WithHelp("left/backspace", "go home"),
+			key.WithHelp("left/backspace", "back"),
 		),
 		Enter: key.NewBinding(
 			key.WithKeys("enter", "right"),
-			key.WithHelp("enter/right", "enter blog"),
+			key.WithHelp("enter/right", "enter"),
 		),
 		Quit: key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),

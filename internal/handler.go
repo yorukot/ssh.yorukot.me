@@ -6,6 +6,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/ssh"
 	"github.com/yorukot/ssh.yorukot.me/content"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
@@ -48,6 +49,7 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	}
 
 	m.header = header.New(m.innerWidth, m.bg, m.path)
+	m.footer = footer.New(m.innerWidth, m.bg, m.keys)
 	m.syncViewport()
 
 	return &m, []tea.ProgramOption{}
@@ -73,6 +75,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.bg = "dark"
 		}
 		m.header = header.New(m.innerWidth, m.bg, m.path)
+		m.footer = footer.New(m.innerWidth, m.bg, m.keys)
 		m.syncViewport()
 	case tea.WindowSizeMsg:
 		m.windowsSizeChange(msg)
@@ -91,6 +94,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) View() tea.View {
 	headerContent := m.header.Render()
 	mainView := m.main.View()
+	footerContent := m.footer.Render()
 	scrollbarView := m.scrollbarView()
 
 	var body string
@@ -101,7 +105,7 @@ func (m *Model) View() tea.View {
 		body = lipgloss.JoinHorizontal(lipgloss.Top, mainView, gap, scrollbarView)
 	}
 
-	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, body)
+	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, body, footerContent)
 	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)
 
 	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)

@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
@@ -19,6 +20,7 @@ func (m *Model) windowsSizeChange(msg tea.WindowSizeMsg) {
 
 	// Model refresh
 	m.header = header.New(m.innerWidth, m.bg, m.path)
+	m.footer = footer.New(m.innerWidth, m.bg, m.keys)
 	m.syncViewport()
 }
 
