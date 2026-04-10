@@ -1,3 +1,4 @@
 tmp/
 .ssh/
 bin/
+.env

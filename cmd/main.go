@@ -18,20 +18,30 @@ import (
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
 	"github.com/charmbracelet/ssh"
+	"github.com/joho/godotenv"
 	"github.com/yorukot/ssh.yorukot.me/internal"
 )
 
 const (
-	host = "localhost"
-	port = "23234"
+	host        = "localhost"
+	defaultPort = "23234"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Warn("Could not load .env file", "error", err)
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		wish.WithMiddleware(
-		bubbletea.Middleware(internal.TeaHandler),
+			bubbletea.Middleware(internal.TeaHandler),
 			activeterm.Middleware(), // Bubble Tea apps usually require a PTY.
 			logging.Middleware(),
 		),
