@@ -30,6 +30,10 @@ type Model struct {
 	main     viewport.Model
 	header   header.Model
 	markdown mkrender.Renderer
+
+	renderedContent string
+	renderedWidth   int
+	renderedPage    string
 }
 
 func (m *Model) contentWidth() int {

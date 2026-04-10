@@ -26,10 +26,19 @@ func (m *Model) syncViewport() {
 	contentWidth := m.contentWidth()
 	contentHeight := m.contentHeight()
 	pageContent := m.pageContent()
-	// we need to make this cache
-	renderedContent, err := m.markdown.Render(pageContent, contentWidth, m.bg)
-	if err != nil {
-		renderedContent = lipgloss.Wrap(pageContent, contentWidth, "")
+	needsRender := m.renderedContent == "" ||
+		m.renderedWidth != contentWidth ||
+		m.renderedPage != pageContent
+
+	if needsRender {
+		renderedContent, err := m.markdown.Render(pageContent, contentWidth, m.bg)
+		if err != nil {
+			renderedContent = lipgloss.Wrap(pageContent, contentWidth, "")
+		}
+
+		m.renderedContent = renderedContent
+		m.renderedWidth = contentWidth
+		m.renderedPage = pageContent
 	}
 
 	if !m.ready {
@@ -45,8 +54,8 @@ func (m *Model) syncViewport() {
 		m.main.SetHeight(contentHeight)
 	}
 
-	if m.main.GetContent() != renderedContent {
-		m.main.SetContent(renderedContent)
+	if m.main.GetContent() != m.renderedContent {
+		m.main.SetContent(m.renderedContent)
 	}
 }
 
@@ -54,7 +63,7 @@ func (m *Model) hasScrollbar() bool {
 	total := max(m.main.TotalLineCount(), 1)
 	visible := max(m.main.VisibleLineCount(), 1)
 	return total > visible
-}	
+}
 
 func (m *Model) scrollbarView() string {
 
@@ -68,7 +77,7 @@ func (m *Model) scrollbarView() string {
 	if total <= visible {
 		return ""
 	}
-	
+
 	thumbHeight := max(1, visible*h/total)
 	maxTop := max(0, h-thumbHeight)
 	top := int(m.main.ScrollPercent() * float64(maxTop))
