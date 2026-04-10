@@ -23,13 +23,18 @@ import (
 )
 
 const (
-	host        = "localhost"
+	defaultHost = "0.0.0.0"
 	defaultPort = "23234"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Warn("Could not load .env file", "error", err)
+	}
+
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = defaultHost
 	}
 
 	port := os.Getenv("PORT")
