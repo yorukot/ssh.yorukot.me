@@ -116,18 +116,14 @@ func BlogIndexCard(bg string) lipgloss.Style {
 
 func BlogIndexCardActive(bg string) lipgloss.Style {
 	border := "117"
-	text := "255"
 	if bg == "light" {
 		border = "31"
-		text = "232"
 	}
 
 	return lipgloss.NewStyle().
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderLeft(true).
 		BorderForeground(lipgloss.Color(border)).
-		Foreground(lipgloss.Color(text)).
-		Bold(true).
 		PaddingLeft(1)
 }
 
@@ -144,6 +140,24 @@ func BlogIndexDescription(bg string) lipgloss.Style {
 	color := "250"
 	if bg == "light" {
 		color = "243"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+}
+
+func BlogIndexPath(bg string) lipgloss.Style {
+	color := "246"
+	if bg == "light" {
+		color = "241"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+}
+
+func BlogIndexPathActive(bg string) lipgloss.Style {
+	color := "252"
+	if bg == "light" {
+		color = "236"
 	}
 
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))

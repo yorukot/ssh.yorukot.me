@@ -1,11 +1,13 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
 
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/blogindex"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
@@ -27,20 +29,36 @@ func (m *Model) windowsSizeChange(msg tea.WindowSizeMsg) {
 func (m *Model) syncViewport() {
 	contentWidth := m.contentWidth()
 	contentHeight := m.contentHeight()
-	pageContent := m.pageContent()
+	pageKey := m.path
+	if m.path == "/blog" {
+		pageKey = fmt.Sprintf("%s:%d", m.path, m.selectedBlog)
+	}
 	needsRender := m.renderedContent == "" ||
 		m.renderedWidth != contentWidth ||
-		m.renderedPage != pageContent
+		m.renderedBg != m.bg ||
+		m.renderedPage != pageKey
 
 	if needsRender {
-		renderedContent, err := m.markdown.Render(pageContent, contentWidth, m.bg)
-		if err != nil {
-			renderedContent = lipgloss.Wrap(pageContent, contentWidth, "")
+		var renderedContent string
+
+		if m.path == "/blog" {
+			var metrics blogindex.Metrics
+			renderedContent, metrics = blogindex.Render(m.blogs, contentWidth, m.selectedBlog, m.bg)
+			m.blogLineStarts = metrics.LineStarts
+			m.blogLineHeights = metrics.LineHeights
+		} else {
+			pageContent := m.pageContent()
+			content, err := m.markdown.Render(pageContent, contentWidth, m.bg)
+			if err != nil {
+				content = lipgloss.Wrap(pageContent, contentWidth, "")
+			}
+			renderedContent = content
 		}
 
 		m.renderedContent = renderedContent
 		m.renderedWidth = contentWidth
-		m.renderedPage = pageContent
+		m.renderedBg = m.bg
+		m.renderedPage = pageKey
 	}
 
 	if !m.ready {
@@ -59,12 +77,32 @@ func (m *Model) syncViewport() {
 	if m.main.GetContent() != m.renderedContent {
 		m.main.SetContent(m.renderedContent)
 	}
+
+	m.syncBlogSelectionViewport()
 }
 
-func (m *Model) hasScrollbar() bool {
-	total := max(m.main.TotalLineCount(), 1)
-	visible := max(m.main.VisibleLineCount(), 1)
-	return total > visible
+func (m *Model) syncBlogSelectionViewport() {
+	if m.path != "/blog" || len(m.blogLineStarts) == 0 || m.selectedBlog >= len(m.blogLineStarts) {
+		return
+	}
+
+	start := m.blogLineStarts[m.selectedBlog]
+	height := m.blogLineHeights[m.selectedBlog]
+	if height <= 0 {
+		height = 1
+	}
+	end := start + height - 1
+
+	top := m.main.YOffset()
+	visibleHeight := max(m.main.Height(), 1)
+	bottom := top + visibleHeight - 1
+
+	switch {
+	case start < top:
+		m.main.SetYOffset(start)
+	case end > bottom:
+		m.main.SetYOffset(end - visibleHeight + 1)
+	}
 }
 
 func (m *Model) scrollbarView() string {

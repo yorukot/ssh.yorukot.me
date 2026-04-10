@@ -10,8 +10,6 @@ func (m *Model) isBlogPost() bool {
 	return strings.HasPrefix(m.path, "/blog/")
 }
 
-
-
 func (m *Model) pageContent() string {
 	switch {
 	case m.path == "/":
@@ -20,8 +18,6 @@ func (m *Model) pageContent() string {
 			return content.ErrorPage(m.path, err)
 		}
 		return home
-	case m.path == "/blog":
-		return content.BlogIndex(m.blogs)
 	case m.isBlogPost():
 		post, err := content.FindPost(m.blogs, m.path)
 		if err != nil {

@@ -6,9 +6,9 @@ import (
 	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
-	"github.com/yorukot/ssh.yorukot.me/internal/components/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
+	"github.com/yorukot/ssh.yorukot.me/internal/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
 )
 
@@ -19,7 +19,8 @@ type Model struct {
 	innerHeight int
 	keys        keymap.Bindings
 
-	path string
+	path         string
+	selectedBlog int
 
 	bg string
 
@@ -35,7 +36,11 @@ type Model struct {
 
 	renderedContent string
 	renderedWidth   int
+	renderedBg      string
 	renderedPage    string
+
+	blogLineStarts  []int
+	blogLineHeights []int
 }
 
 func (m *Model) contentWidth() int {
@@ -51,4 +56,10 @@ func (m *Model) contentHeight() int {
 	headerHeight := lipgloss.Height(m.header.Render())
 	footerHeight := lipgloss.Height(m.footer.Render())
 	return max(1, m.innerHeight-styles.InnerBoxPaddingTop*2-headerHeight-footerHeight)
+}
+
+func (m *Model) hasScrollbar() bool {
+	total := max(m.main.TotalLineCount(), 1)
+	visible := max(m.main.VisibleLineCount(), 1)
+	return total > visible
 }

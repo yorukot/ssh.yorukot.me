@@ -1,19 +1,21 @@
 package internal
 
 import (
+	"log"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/ssh"
 	"github.com/yorukot/ssh.yorukot.me/content"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/blogindex"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
-	"github.com/yorukot/ssh.yorukot.me/internal/components/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
 	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
+	"github.com/yorukot/ssh.yorukot.me/internal/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
 	"github.com/yorukot/ssh.yorukot.me/pkg/pathutil"
-	"log"
 )
 
 // You can wire any Bubble Tea model up to the middleware with a function that
@@ -80,7 +82,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.windowsSizeChange(msg)
 	case tea.KeyMsg:
+		if m.path == "/blog" {
+			selected, openPath, handled := blogindex.HandleKey(msg, m.keys, m.blogs, m.selectedBlog)
+			if handled {
+				m.selectedBlog = selected
+				if openPath != "" {
+					m.goToPath(openPath)
+				} else {
+					m.syncViewport()
+				}
+				return m, nil
+			}
+		}
+
 		switch {
+		case key.Matches(msg, m.keys.Enter):
+			if m.path == "/" {
+				m.goToPath("/blog")
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.Back):
+			m.goToPath(pathutil.ParentPath(m.path))
+			return m, nil
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		}
