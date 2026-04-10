@@ -47,6 +47,42 @@ func FooterSeparator(bg string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
+func EndSectionQuote(bg string) lipgloss.Style {
+	color := "224"
+	if bg == "light" {
+		color = "174"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Italic(true)
+}
+
+func EndSectionLabel(bg string) lipgloss.Style {
+	color := "183"
+	if bg == "light" {
+		color = "97"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Bold(true)
+}
+
+func EndSectionLink(bg string) lipgloss.Style {
+	color := "117"
+	if bg == "light" {
+		color = "32"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Bold(true)
+}
+
+func EndSectionSeparator(bg string) lipgloss.Style {
+	color := "240"
+	if bg == "light" {
+		color = "251"
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+}
+
 func HeaderTitle(bg string) lipgloss.Style {
 	color := "255"
 	if bg == "light" {

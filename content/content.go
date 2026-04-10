@@ -12,10 +12,12 @@ type Content struct {
 	HeaderTagline string
 	FooterQuote   string
 	FooterLinks   []FooterLink
+	PGPKeyID      string
 }
 
 type FooterLink struct {
 	Label string
+	Content string
 	URL   string
 }
 
@@ -25,11 +27,12 @@ func GetContent() Content {
 		HeaderTagline: "Open-source developer",
 		FooterQuote:   "Get busy living, or get busy dying",
 		FooterLinks: []FooterLink{
-			{Label: "Email", URL: "mailto:hi@yorukot.me"},
+			{Label: "Email", Content:"hi@yorukot.me", URL: "mailto:hi@yorukot.me"},
 			{Label: "GitHub", URL: "https://github.com/yorukot"},
 			{Label: "Telegram", URL: "https://t.me/yorukot"},
 			{Label: "Discord", URL: "https://dc.yorukot.me"},
 			{Label: "Ko-fi", URL: "https://donate.yorukot.me"},
+			{Label: "OpenPGP", Content: "F0188B9BF901C94E", URL: "https://keys.openpgp.org/search?q=F0188B9BF901C94E"},
 		},
 	}
 }

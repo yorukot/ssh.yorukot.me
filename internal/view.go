@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/blogindex"
+	"github.com/yorukot/ssh.yorukot.me/internal/components/endsection"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/header"
 	"github.com/yorukot/ssh.yorukot.me/internal/constants"
@@ -80,8 +81,18 @@ func (m *Model) syncViewport() {
 }
 
 func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
+	appendEndSection := func(content string) string {
+		if m.path == "/" {
+			return content
+		}
+
+		endContent := endsection.New(width, m.bg).Render()
+		return lipgloss.JoinVertical(lipgloss.Left, content, "", endContent)
+	}
+
 	if m.path == "/blog" {
-		return blogindex.Render(m.blogs, width, m.selectedBlog, m.bg)
+		content, metrics := blogindex.Render(m.blogs, width, m.selectedBlog, m.bg)
+		return appendEndSection(content), metrics
 	}
 
 	pageContent := m.pageContent()
@@ -90,7 +101,7 @@ func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
 		content = lipgloss.Wrap(pageContent, width, "")
 	}
 
-	return content, blogindex.Metrics{}
+	return appendEndSection(content), blogindex.Metrics{}
 }
 
 func (m *Model) syncBlogSelectionViewport() {
