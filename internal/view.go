@@ -27,36 +27,34 @@ func (m *Model) windowsSizeChange(msg tea.WindowSizeMsg) {
 }
 
 func (m *Model) syncViewport() {
-	contentWidth := m.contentWidth()
 	contentHeight := m.contentHeight()
+	baseWidth := m.contentWidth(false)
 	pageKey := m.path
 	if m.path == "/blog" {
 		pageKey = fmt.Sprintf("%s:%d", m.path, m.selectedBlog)
 	}
+
 	needsRender := m.renderedContent == "" ||
-		m.renderedWidth != contentWidth ||
+		m.renderedBase != baseWidth ||
+		m.renderedHeight != contentHeight ||
 		m.renderedBg != m.bg ||
 		m.renderedPage != pageKey
 
+	contentWidth := m.renderedWidth
 	if needsRender {
-		var renderedContent string
-
-		if m.path == "/blog" {
-			var metrics blogindex.Metrics
-			renderedContent, metrics = blogindex.Render(m.blogs, contentWidth, m.selectedBlog, m.bg)
-			m.blogLineStarts = metrics.LineStarts
-			m.blogLineHeights = metrics.LineHeights
-		} else {
-			pageContent := m.pageContent()
-			content, err := m.markdown.Render(pageContent, contentWidth, m.bg)
-			if err != nil {
-				content = lipgloss.Wrap(pageContent, contentWidth, "")
-			}
-			renderedContent = content
+		renderedContent, metrics := m.renderContent(baseWidth)
+		contentWidth = baseWidth
+		if lipgloss.Height(renderedContent) > contentHeight {
+			contentWidth = m.contentWidth(true)
+			renderedContent, metrics = m.renderContent(contentWidth)
 		}
 
+		m.blogLineStarts = metrics.LineStarts
+		m.blogLineHeights = metrics.LineHeights
 		m.renderedContent = renderedContent
 		m.renderedWidth = contentWidth
+		m.renderedBase = baseWidth
+		m.renderedHeight = contentHeight
 		m.renderedBg = m.bg
 		m.renderedPage = pageKey
 	}
@@ -79,6 +77,20 @@ func (m *Model) syncViewport() {
 	}
 
 	m.syncBlogSelectionViewport()
+}
+
+func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
+	if m.path == "/blog" {
+		return blogindex.Render(m.blogs, width, m.selectedBlog, m.bg)
+	}
+
+	pageContent := m.pageContent()
+	content, err := m.markdown.Render(pageContent, width, m.bg)
+	if err != nil {
+		content = lipgloss.Wrap(pageContent, width, "")
+	}
+
+	return content, blogindex.Metrics{}
 }
 
 func (m *Model) syncBlogSelectionViewport() {

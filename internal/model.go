@@ -36,6 +36,8 @@ type Model struct {
 
 	renderedContent string
 	renderedWidth   int
+	renderedBase    int
+	renderedHeight  int
 	renderedBg      string
 	renderedPage    string
 
@@ -43,9 +45,9 @@ type Model struct {
 	blogLineHeights []int
 }
 
-func (m *Model) contentWidth() int {
+func (m *Model) contentWidth(hasScrollbar bool) int {
 	availableWidth := m.innerWidth - styles.InnerBoxPaddingSide*2
-	if m.hasScrollbar() {
+	if hasScrollbar {
 		availableWidth -= constants.ScrollbarGap + constants.ScrollbarWidth
 	}
 
@@ -56,10 +58,4 @@ func (m *Model) contentHeight() int {
 	headerHeight := lipgloss.Height(m.header.Render())
 	footerHeight := lipgloss.Height(m.footer.Render())
 	return max(1, m.innerHeight-styles.InnerBoxPaddingTop*2-headerHeight-footerHeight)
-}
-
-func (m *Model) hasScrollbar() bool {
-	total := max(m.main.TotalLineCount(), 1)
-	visible := max(m.main.VisibleLineCount(), 1)
-	return total > visible
 }
