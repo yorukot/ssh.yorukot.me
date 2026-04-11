@@ -7,11 +7,12 @@ post_slug: how-to-custom-gnome-terminal
 featured: true
 tags: ['terminal', 'theme']
 description: Customize your Ubuntu GNOME terminal to have a unique look using Zsh and Oh My Zsh.
+lang: en
 ---
 
-<Alert type="info">
 Because this article is very old, and i can't find the original image, so some image are missing.
-</Alert>
+
+---
 
 If you wish to have a very stylish terminal like this:
 ![intro image](../../../assets/blog/how-to-custom-gnome-terminal/intro.webp)

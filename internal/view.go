@@ -64,9 +64,11 @@ func (m *Model) syncViewport() {
 		m.main = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 		m.main.MouseWheelEnabled = true
 		m.main.FillHeight = true
-		m.main.SoftWrap = false
+		m.main.SoftWrap = true
 		m.main.KeyMap.Up = m.keys.Up
 		m.main.KeyMap.Down = m.keys.Down
+		m.main.KeyMap.Left.Unbind()
+		m.main.KeyMap.Right.Unbind()
 		m.ready = true
 	} else {
 		m.main.SetWidth(contentWidth)
@@ -89,7 +91,7 @@ func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
 		endContent := endsection.New(width, m.bg).Render()
 		return lipgloss.JoinVertical(lipgloss.Left, content, "", endContent)
 	}
-	
+
 	if m.path == "/blog" {
 		content, metrics := blogindex.Render(m.blogs, width, m.selectedBlog, m.bg)
 		return appendEndSection(content), metrics

@@ -41,9 +41,13 @@ func (r Renderer) Render(markdown string, width int) (string, error) {
 }
 
 func (r Renderer) renderBlocks(parent ast.Node, source []byte, width int) string {
+	return r.renderBlocksWithStyle(parent, source, width, lipgloss.Style{})
+}
+
+func (r Renderer) renderBlocksWithStyle(parent ast.Node, source []byte, width int, base lipgloss.Style) string {
 	blocks := make([]string, 0, parent.ChildCount())
 	for child := parent.FirstChild(); child != nil; child = child.NextSibling() {
-		block := r.renderBlock(child, source, width)
+		block := r.renderBlockWithStyle(child, source, width, base)
 		if strings.TrimSpace(block) == "" {
 			continue
 		}
@@ -55,36 +59,45 @@ func (r Renderer) renderBlocks(parent ast.Node, source []byte, width int) string
 }
 
 func (r Renderer) renderBlock(node ast.Node, source []byte, width int) string {
+	return r.renderBlockWithStyle(node, source, width, lipgloss.Style{})
+}
+
+func (r Renderer) renderBlockWithStyle(node ast.Node, source []byte, width int, base lipgloss.Style) string {
 	switch n := node.(type) {
 	case *ast.Heading:
-		text := r.renderInlineChildren(n, source)
+		headingStyle := mergeStyle(base, r.headingStyle(n.Level))
+		text := r.renderInlineChildrenWithStyle(n, source, headingStyle)
 		prefix := strings.Repeat("#", n.Level) + " "
-		return r.headingStyle(n.Level).Render(wrapText(prefix+text, width))
+		return wrapText(headingStyle.Render(prefix)+text, width)
 	case *ast.Paragraph:
-		return r.Content.Paragraph.Render(wrapText(r.renderInlineChildren(n, source), width))
+		return wrapText(r.renderInlineChildrenWithStyle(n, source, mergeStyle(base, r.Content.Paragraph)), width)
 	case *ast.TextBlock:
 		if n.HasChildren() {
-			return r.Content.Text.Render(wrapText(r.renderInlineChildren(n, source), width))
+			return wrapText(r.renderInlineChildrenWithStyle(n, source, mergeStyle(base, r.Content.Text)), width)
 		}
-		return r.Content.Text.Render(wrapText(string(n.Lines().Value(source)), width))
+		return mergeStyle(base, r.Content.Text).Render(wrapText(string(n.Lines().Value(source)), width))
 	case *ast.Blockquote:
-		return r.renderBlockQuote(n, source, width)
+		return r.renderBlockQuote(n, source, width, mergeStyle(base, r.Content.BlockQuote.Body))
 	case *ast.List:
-		return r.renderList(n, source, width)
+		return r.renderList(n, source, width, mergeStyle(base, r.Content.List.Item))
 	case *extast.Table:
 		return r.renderTable(n, source, width)
 	case *ast.FencedCodeBlock:
 		return r.renderFencedCodeBlock(n, source, width)
 	case *ast.CodeBlock:
-		return r.Content.CodeBlock.Container.Render(r.Content.CodeBlock.Code.Render(string(n.Lines().Value(source))))
+		return r.renderCodeBlock(string(n.Lines().Value(source)), width, "")
 	case *ast.ThematicBreak:
 		return r.Content.Rule.Render(strings.Repeat("-", width))
 	default:
 		if node.HasChildren() {
-			return r.renderBlocks(node, source, width)
+			return r.renderBlocksWithStyle(node, source, width, base)
 		}
 		return strings.TrimSpace(nodeTextValue(node, source))
 	}
+}
+
+func mergeStyle(base, own lipgloss.Style) lipgloss.Style {
+	return base.Inherit(own)
 }
 
 func nodeTextValue(node ast.Node, source []byte) string {

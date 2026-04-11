@@ -90,7 +90,7 @@ func themedRenderer(p themePalette) Renderer {
 		Content: ContentStyle{
 			Paragraph:     lipgloss.NewStyle().Foreground(lipgloss.Color(p.text)),
 			Text:          lipgloss.NewStyle().Foreground(lipgloss.Color(p.text)),
-			Strong:        lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(p.text)),
+			Strong:        lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(p.blue)),
 			Emphasis:      lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color(p.lavender)),
 			InlineCode:    lipgloss.NewStyle().Foreground(lipgloss.Color(p.yellow)).Background(lipgloss.Color(p.surface)).Padding(0, 1),
 			Strikethrough: lipgloss.NewStyle().Strikethrough(true).Foreground(lipgloss.Color(p.overlay)),

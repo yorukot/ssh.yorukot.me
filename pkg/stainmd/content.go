@@ -146,23 +146,23 @@ func (r Renderer) renderTableCells(row ast.Node, source []byte) []string {
 	return cells
 }
 
-func (r Renderer) renderBlockQuote(node *ast.Blockquote, source []byte, width int) string {
+func (r Renderer) renderBlockQuote(node *ast.Blockquote, source []byte, width int, bodyStyle lipgloss.Style) string {
 	prefix := r.Content.BlockQuote.Prefix.Render("│ ")
 	innerWidth := max(1, width-lipgloss.Width(prefix))
-	body := r.renderBlocks(node, source, innerWidth)
+	body := r.renderBlocksWithStyle(node, source, innerWidth, bodyStyle)
 	lines := strings.Split(body, "\n")
 	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			lines[i] = prefix
 			continue
 		}
-		lines[i] = prefix + r.Content.BlockQuote.Body.Render(line)
+		lines[i] = prefix + line
 	}
 
 	return r.Content.BlockQuote.Container.Render(strings.Join(lines, "\n"))
 }
 
-func (r Renderer) renderList(node *ast.List, source []byte, width int) string {
+func (r Renderer) renderList(node *ast.List, source []byte, width int, itemStyle lipgloss.Style) string {
 	items := make([]string, 0, node.ChildCount())
 	index := node.Start
 	if index == 0 {
@@ -178,14 +178,14 @@ func (r Renderer) renderList(node *ast.List, source []byte, width int) string {
 			index++
 		}
 
-		itemBody := r.renderListItem(item, source, max(1, width-lipgloss.Width(marker)))
+		itemBody := r.renderListItem(item, source, max(1, width-lipgloss.Width(marker)), itemStyle)
 		itemLines := strings.Split(itemBody, "\n")
 		for i, line := range itemLines {
 			prefix := strings.Repeat(" ", lipgloss.Width(marker))
 			if i == 0 {
 				prefix = markerStyle.Render(marker)
 			}
-			itemLines[i] = prefix + r.Content.List.Item.Render(line)
+			itemLines[i] = prefix + line
 		}
 
 		items = append(items, strings.Join(itemLines, "\n"))
@@ -194,21 +194,25 @@ func (r Renderer) renderList(node *ast.List, source []byte, width int) string {
 	return r.Content.List.Container.Render(strings.Join(items, "\n"))
 }
 
-func (r Renderer) renderListItem(node ast.Node, source []byte, width int) string {
+func (r Renderer) renderListItem(node ast.Node, source []byte, width int, base lipgloss.Style) string {
 	parts := make([]string, 0, node.ChildCount())
 	for child := node.FirstChild(); child != nil; child = child.NextSibling() {
-		parts = append(parts, r.renderBlock(child, source, width))
+		parts = append(parts, r.renderBlockWithStyle(child, source, width, base))
 	}
 	return strings.Join(parts, "\n")
 }
 
 func (r Renderer) renderFencedCodeBlock(node *ast.FencedCodeBlock, source []byte, width int) string {
-	var out strings.Builder
 	language := strings.TrimSpace(string(node.Language(source)))
-
 	content := strings.TrimRight(nodeTextValue(node, source), "\n")
-	out.WriteString(r.renderHighlightedCodeBlock(content, language))
-	return r.Content.CodeBlock.Container.Width(width).Render(out.String())
+	return r.renderCodeBlock(content, width, language)
+}
+
+func (r Renderer) renderCodeBlock(content string, width int, language string) string {
+	innerWidth := max(1, width-r.Content.CodeBlock.Container.GetHorizontalFrameSize())
+	rendered := r.renderHighlightedCodeBlock(content, language)
+	wrapped := lipgloss.Wrap(rendered, innerWidth, "")
+	return r.Content.CodeBlock.Container.Width(width).Render(wrapped)
 }
 
 func (r Renderer) renderHighlightedCodeBlock(content, language string) string {
@@ -236,14 +240,22 @@ func (r Renderer) codeBlockStyleName() string {
 }
 
 func (r Renderer) renderInlineChildren(parent ast.Node, source []byte) string {
+	return r.renderInlineChildrenWithStyle(parent, source, lipgloss.Style{})
+}
+
+func mergeInlineStyle(base, own lipgloss.Style) lipgloss.Style {
+	return own.Inherit(base)
+}
+
+func (r Renderer) renderInlineChildrenWithStyle(parent ast.Node, source []byte, base lipgloss.Style) string {
 	var out strings.Builder
 	for child := parent.FirstChild(); child != nil; child = child.NextSibling() {
-		out.WriteString(r.renderInlineNode(child, source))
+		out.WriteString(r.renderInlineNode(child, source, base))
 	}
 	return out.String()
 }
 
-func (r Renderer) renderInlineNode(node ast.Node, source []byte) string {
+func (r Renderer) renderInlineNode(node ast.Node, source []byte, base lipgloss.Style) string {
 	switch n := node.(type) {
 	case *ast.Text:
 		text := string(n.Value(source))
@@ -253,27 +265,26 @@ func (r Renderer) renderInlineNode(node ast.Node, source []byte) string {
 		if n.SoftLineBreak() {
 			return text + " "
 		}
-		return text
+		return base.Render(text)
 	case *ast.String:
-		return string(n.Value)
+		return base.Render(string(n.Value))
 	case *ast.CodeSpan:
-		return r.Content.InlineCode.Render(r.renderInlineChildren(n, source))
+		style := mergeInlineStyle(base, r.Content.InlineCode)
+		return style.Render(r.renderInlineChildrenWithStyle(n, source, style))
 	case *ast.Emphasis:
-		text := r.renderInlineChildren(n, source)
+		style := mergeInlineStyle(base, r.Content.Emphasis)
 		if n.Level >= 2 {
-			return r.Content.Strong.Render(text)
+			style = mergeInlineStyle(base, r.Content.Strong)
 		}
-		return r.Content.Emphasis.Render(text)
+		return r.renderInlineChildrenWithStyle(n, source, style)
 	case *ast.Link:
-		label := r.renderInlineChildren(n, source)
-		styledLabel := r.Content.Link.Text.Render(label)
-		return OSC8Link(string(n.Destination), styledLabel)
+		style := mergeInlineStyle(base, r.Content.Link.Text).Hyperlink(string(n.Destination))
+		return r.renderInlineChildrenWithStyle(n, source, style)
 	case *ast.AutoLink:
 		label := string(n.Label(source))
-		styledLabel := r.Content.Link.Text.Render(label)
-		return OSC8Link(string(n.URL(source)), styledLabel)
+		return mergeInlineStyle(base, r.Content.Link.Text).Hyperlink(string(n.URL(source))).Render(label)
 	case *ast.Image:
-		label := r.renderInlineChildren(n, source)
+		label := r.renderInlineChildrenWithStyle(n, source, mergeInlineStyle(base, r.Content.Image.Alt))
 		if strings.TrimSpace(label) == "" {
 			label = string(n.Destination)
 		}
@@ -285,7 +296,7 @@ func (r Renderer) renderInlineNode(node ast.Node, source []byte) string {
 		return strings.Join(parts, " ")
 	default:
 		if node.HasChildren() {
-			return r.renderInlineChildren(node, source)
+			return r.renderInlineChildrenWithStyle(node, source, base)
 		}
 		return nodeTextValue(node, source)
 	}

@@ -34,3 +34,31 @@ func TestRenderUsesStainmd(t *testing.T) {
 		t.Fatalf("expected rendered output to hide notice markers\noutput:\n%s", out)
 	}
 }
+
+func TestRenderIgnoresRawTagLines(t *testing.T) {
+	renderer := New()
+
+	input := strings.Join([]string{
+		"# Hello",
+		"",
+		"<Alert type=\"info\">",
+		"Read this",
+		"</Alert>",
+	}, "\n")
+
+	out, err := renderer.Render(input, 40, "dark")
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	if !strings.Contains(out, "Read this") {
+		t.Fatalf("expected rendered output to keep tag body\noutput:\n%s", out)
+	}
+
+	if strings.Contains(out, "<Alert") || strings.Contains(out, "</Alert>") {
+		t.Fatalf("expected rendered output to ignore raw tag lines\noutput:\n%s", out)
+	}
+	if strings.Contains(out, "&lt;Alert") {
+		t.Fatalf("expected rendered output to avoid escaped raw tag lines\noutput:\n%s", out)
+	}
+}

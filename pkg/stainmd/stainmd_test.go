@@ -60,6 +60,11 @@ func TestRenderBasicMarkdown(t *testing.T) {
 	if strings.Contains(plain, "https://example.com)") || strings.Contains(plain, " link https://example.com") {
 		t.Fatalf("rendered output should not include visible markdown link destination\noutput:\n%s", out)
 	}
+
+	afterLink := xansi.ResetHyperlink() + renderer.Content.Paragraph.Render(" and ")
+	if !strings.Contains(out, afterLink) {
+		t.Fatalf("expected paragraph style to continue after hyperlink reset\noutput:\n%s", out)
+	}
 }
 
 func TestRenderOrderedList(t *testing.T) {
@@ -91,6 +96,58 @@ func TestRenderWrapsParagraphs(t *testing.T) {
 
 	if !strings.Contains(out, "\n") {
 		t.Fatalf("expected wrapped output to contain a newline, got:\n%s", out)
+	}
+}
+
+func TestRenderRestoresParagraphStyleAfterInlineStyles(t *testing.T) {
+	renderer := New()
+
+	input := strings.Join([]string{
+		"before **bold** after",
+		"before *soft* after",
+		"before `code` after",
+		"before [link](https://example.com) after",
+		"before **bold [link](https://example.com) tail** after",
+	}, "\n\n")
+
+	out, err := renderer.Render(input, 80)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	checks := []string{
+		renderer.Content.Strong.Render("bold") + renderer.Content.Paragraph.Render(" after"),
+		xansi.ResetHyperlink() + renderer.Content.Paragraph.Render(" after"),
+		xansi.ResetHyperlink() + renderer.Content.Strong.Render(" tail") + renderer.Content.Paragraph.Render(" after"),
+	}
+
+	for _, want := range checks {
+		if !strings.Contains(out, want) {
+			t.Fatalf("expected inline style to restore following text style for %q\noutput:\n%s", want, out)
+		}
+	}
+
+	if strings.Count(out, renderer.Content.Paragraph.Render(" after")) < 4 {
+		t.Fatalf("expected paragraph style to be restored after inline segments\noutput:\n%s", out)
+	}
+}
+
+func TestRenderRestoresParagraphStyleAfterCJKStrongText(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.Render("**你以為的特選**：啊不就成績不好的人選擇逃避讀書的管道嗎，都是一群壞孩子。", 80)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	wantStrong := renderer.Content.Strong.Render("你以為的特選")
+	if !strings.Contains(out, wantStrong) {
+		t.Fatalf("expected CJK strong text to use strong style\noutput:\n%s", out)
+	}
+
+	wantParagraph := renderer.Content.Paragraph.Render("：啊不就成績不好的人選擇逃避讀書的管道嗎，都是一群壞孩子。")
+	if !strings.Contains(out, wantParagraph) {
+		t.Fatalf("expected paragraph style to continue after CJK strong text\noutput:\n%s", out)
 	}
 }
 
@@ -127,6 +184,40 @@ func TestRenderFencedCodeBlockHighlightsSyntax(t *testing.T) {
 
 	if countANSICodes(out) < 4 {
 		t.Fatalf("expected highlighted output to contain multiple ANSI sequences, got:\n%s", out)
+	}
+}
+
+func TestRenderFencedCodeBlockWrapsLongLines(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.Render("```go\nconst veryLongIdentifier = \"abcdefghijklmnopqrstuvwxyz0123456789\"\n```", 24)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	plain := stripANSI(out)
+	if strings.Contains(plain, "veryLongIdentifier = \"abcdefghijklmnopqrstuvwxyz0123456789\"") {
+		t.Fatalf("expected long fenced code line to wrap, got:\n%s", out)
+	}
+	if strings.Count(plain, "\n") < 2 {
+		t.Fatalf("expected wrapped fenced code block to span multiple lines, got:\n%s", out)
+	}
+}
+
+func TestRenderIndentedCodeBlockWrapsLongLines(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.Render("    some_super_long_code_token_without_spaces_but_with_underscores_to_force_wrapping", 22)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	plain := stripANSI(out)
+	if strings.Contains(plain, "some_super_long_code_token_without_spaces_but_with_underscores_to_force_wrapping") {
+		t.Fatalf("expected indented code block line to wrap, got:\n%s", out)
+	}
+	if strings.Count(plain, "\n") < 1 {
+		t.Fatalf("expected wrapped indented code block to contain a newline, got:\n%s", out)
 	}
 }
 

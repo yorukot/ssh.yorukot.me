@@ -7,7 +7,6 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
-	"github.com/yorukot/ssh.yorukot.me/pkg/stainmd"
 )
 
 type Model struct {
@@ -34,14 +33,14 @@ func (m Model) Render() string {
 	}
 
 	if len(m.content.FooterLinks) > 0 {
-		sections = append(sections, renderLinks(m.content.FooterLinks, m.bg)...)
+		sections = append(sections, renderLinks(m.content.FooterLinks, m.width, m.bg)...)
 	}
 
 	stack := lipgloss.JoinVertical(lipgloss.Left, sections...)
 	return lipgloss.NewStyle().Width(max(m.width, 1)).Align(lipgloss.Left).Render(stack)
 }
 
-func renderLinks(links []content.FooterLink, bg string) []string {
+func renderLinks(links []content.FooterLink, width int, bg string) []string {
 	lines := make([]string, 0, len(links))
 
 	for _, link := range links {
@@ -54,22 +53,35 @@ func renderLinks(links []content.FooterLink, bg string) []string {
 			value = link.URL
 		}
 
-		lines = append(lines, renderLine(link.Label, value, link.URL, bg))
+		lines = append(lines, renderLine(link.Label, value, link.URL, width, bg))
 	}
 
 	return lines
 }
 
-func renderLine(label, value, url, bg string) string {
-	visibleValue := styles.EndSectionLink(bg).Render(value)
+func renderLine(label, value, url string, width int, bg string) string {
+	labelText := fmt.Sprintf("%-10s", label)
+	labelPart := styles.EndSectionLabel(bg).Render(labelText)
+	separatorPart := styles.EndSectionSeparator(bg).Render(" : ")
+	prefix := labelPart + separatorPart
+	prefixWidth := lipgloss.Width(prefix)
+	availableValueWidth := max(1, width-prefixWidth)
+
+	linkStyle := styles.EndSectionLink(bg)
 	if strings.TrimSpace(url) != "" {
-		visibleValue = stainmd.OSC8Link(url, visibleValue)
+		linkStyle = linkStyle.Hyperlink(url)
+	}
+	visibleValue := linkStyle.Render(value)
+
+	wrappedValue := lipgloss.Wrap(visibleValue, availableValueWidth, "")
+	valueLines := strings.Split(wrappedValue, "\n")
+	for i := 1; i < len(valueLines); i++ {
+		valueLines[i] = strings.Repeat(" ", prefixWidth) + valueLines[i]
 	}
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		styles.EndSectionLabel(bg).Render(fmt.Sprintf("%-10s", label)),
-		styles.EndSectionSeparator(bg).Render(" : "),
-		visibleValue,
-	)
+	if len(valueLines) == 0 {
+		return prefix
+	}
+	valueLines[0] = prefix + valueLines[0]
+	return strings.Join(valueLines, "\n")
 }
