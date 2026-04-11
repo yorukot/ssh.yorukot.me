@@ -1,7 +1,7 @@
 run:
 	go run cmd/main.go
 
-dev: 
+dev:
 	air go run cmd/main.go
 
 build:

@@ -7,8 +7,11 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,6 +30,20 @@ const (
 	defaultPort = "23234"
 )
 
+func newPprofServer(addr string) *http.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	return &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Warn("Could not load .env file", "error", err)
@@ -41,6 +58,9 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+
+	pprofAddr := os.Getenv("PPROF_ADDR")
+	isDevEnv := strings.EqualFold(os.Getenv("ENV"), "dev")
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
@@ -57,6 +77,19 @@ func main() {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	var pprofServer *http.Server
+	if isDevEnv && pprofAddr != "" {
+		pprofServer = newPprofServer(pprofAddr)
+		log.Info("Starting pprof server", "address", pprofAddr)
+		go func() {
+			if err := pprofServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Error("Could not start pprof server", "error", err)
+				done <- nil
+			}
+		}()
+	}
+
 	log.Info("Starting SSH server", "host", host, "port", port)
 	go func() {
 		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
@@ -71,5 +104,10 @@ func main() {
 	defer func() { cancel() }()
 	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
 		log.Error("Could not stop server", "error", err)
+	}
+	if pprofServer != nil {
+		if err := pprofServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Error("Could not stop pprof server", "error", err)
+		}
 	}
 }
