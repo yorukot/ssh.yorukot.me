@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -8,24 +9,36 @@ import (
 	"github.com/yorukot/ssh.yorukot.me/pkg/stainmd"
 )
 
-const defaultMarkdownPath = "pkg/stainmd/demo/sample.md"
+const defaultMarkdownPath = "pkg/stainmd/demo/special-recruit.md"
 
 func main() {
+	inputPath := flag.String("input", defaultMarkdownPath, "markdown file to render")
+	outputPath := flag.String("output", "", "optional file path to write rendered output")
+	width := flag.Int("width", 72, "render width")
+	flag.Parse()
+
 	renderer := stainmd.New()
-	path := defaultMarkdownPath
 
-	markdown, err := loadMarkdown(path)
+	markdown, err := loadMarkdown(*inputPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	out, err := renderer.Render(markdown, 72)
+	out, err := renderer.Render(markdown, *width)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Rendering %s\n\n", path)
+	fmt.Printf("Rendering %s\n\n", *inputPath)
 	fmt.Print(out)
+
+	if *outputPath != "" {
+		if err := os.WriteFile(*outputPath, []byte(out), 0o644); err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("\n\nSaved rendered output to %s\n", *outputPath)
+	}
 }
 
 func loadMarkdown(path string) (string, error) {

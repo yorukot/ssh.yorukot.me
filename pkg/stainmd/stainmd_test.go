@@ -151,6 +151,26 @@ func TestRenderRestoresParagraphStyleAfterCJKStrongText(t *testing.T) {
 	}
 }
 
+func TestRenderRestoresParagraphStyleAcrossSoftLineBreak(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.Render("第一行\n第二行", 80)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	want := renderer.Content.Paragraph.Render("第一行") + "\n" + renderer.Content.Paragraph.Render("第二行")
+	want = renderer.Content.Paragraph.Render("第一行") + " " + renderer.Content.Paragraph.Render("第二行")
+	if !strings.Contains(out, want) {
+		t.Fatalf("expected paragraph style to continue across soft line break\noutput:\n%s", out)
+	}
+
+	plain := stripANSI(out)
+	if !strings.Contains(plain, "第一行 第二行") {
+		t.Fatalf("expected visible soft line break content\noutput:\n%s", out)
+	}
+}
+
 func TestRenderTightListInlineMarkdown(t *testing.T) {
 	renderer := New()
 	renderer.Content.InlineCode = renderer.Content.InlineCode.Bold(true)
@@ -166,6 +186,20 @@ func TestRenderTightListInlineMarkdown(t *testing.T) {
 
 	if !strings.Contains(out, "code") {
 		t.Fatalf("expected rendered inline code text, got:\n%s", out)
+	}
+}
+
+func TestRenderInlineCodeUsesSinglePadding(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.Render("before `code` after", 80)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	want := renderer.Content.Paragraph.Render("before ") + renderer.Content.InlineCode.Render("code") + renderer.Content.Paragraph.Render(" after")
+	if !strings.Contains(out, want) {
+		t.Fatalf("expected inline code to render with a single layer of padding\noutput:\n%s", out)
 	}
 }
 
@@ -238,8 +272,10 @@ func TestRenderTable(t *testing.T) {
 
 	plain := stripANSI(out)
 	checks := []string{
-		"+",
-		"|",
+		"╭",
+		"│",
+		"├",
+		"╯",
 		"Name",
 		"Status",
 		"Links",

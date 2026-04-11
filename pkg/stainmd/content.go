@@ -260,17 +260,17 @@ func (r Renderer) renderInlineNode(node ast.Node, source []byte, base lipgloss.S
 	case *ast.Text:
 		text := string(n.Value(source))
 		if n.HardLineBreak() {
-			return text + "\n"
+			return base.Render(text) + "\n"
 		}
 		if n.SoftLineBreak() {
-			return text + " "
+			return base.Render(text) + " "
 		}
 		return base.Render(text)
 	case *ast.String:
 		return base.Render(string(n.Value))
 	case *ast.CodeSpan:
 		style := mergeInlineStyle(base, r.Content.InlineCode)
-		return style.Render(r.renderInlineChildrenWithStyle(n, source, style))
+		return style.Render(r.renderInlineChildrenWithStyle(n, source, lipgloss.Style{}))
 	case *ast.Emphasis:
 		style := mergeInlineStyle(base, r.Content.Emphasis)
 		if n.Level >= 2 {
