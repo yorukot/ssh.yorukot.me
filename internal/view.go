@@ -62,7 +62,7 @@ func (m *Model) syncViewport() {
 
 	if !m.ready {
 		m.main = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
-		m.main.MouseWheelEnabled = true
+		m.main.MouseWheelEnabled = false
 		m.main.FillHeight = true
 		m.main.SoftWrap = true
 		m.main.KeyMap.Up = m.keys.Up

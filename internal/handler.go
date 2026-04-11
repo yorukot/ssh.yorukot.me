@@ -2,6 +2,7 @@ package internal
 
 import (
 	"log"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -81,7 +82,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncViewport()
 	case tea.WindowSizeMsg:
 		m.windowsSizeChange(msg)
+	case tea.MouseWheelMsg:
+		m.handleMouseWheel(msg, time.Now())
+		return m, nil
 	case tea.KeyMsg:
+		m.resetMouseWheelBurst()
 		if m.path == "/blog" {
 			selected, openPath, handled := blogindex.HandleKey(msg, m.keys, m.blogs, m.selectedBlog)
 			if handled {
@@ -114,6 +119,36 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+func (m *Model) handleMouseWheel(msg tea.MouseWheelMsg, now time.Time) {
+	button := msg.Button
+	if button != tea.MouseWheelUp && button != tea.MouseWheelDown {
+		m.main, _ = m.main.Update(msg)
+		return
+	}
+
+	if m.lastWheelButton != button || now.Sub(m.lastWheelAt) > constants.MouseWheelBurstTimeout {
+		m.wheelBurstLines = 1
+	} else {
+		m.wheelBurstLines = min(m.wheelBurstLines*2, constants.MouseWheelMaxStep)
+	}
+
+	m.lastWheelButton = button
+	m.lastWheelAt = now
+
+	switch button {
+	case tea.MouseWheelUp:
+		m.main.ScrollUp(m.wheelBurstLines)
+	case tea.MouseWheelDown:
+		m.main.ScrollDown(m.wheelBurstLines)
+	}
+}
+
+func (m *Model) resetMouseWheelBurst() {
+	m.lastWheelButton = tea.MouseNone
+	m.wheelBurstLines = 0
+	m.lastWheelAt = time.Time{}
+}
+
 func (m *Model) View() tea.View {
 	headerContent := m.header.Render()
 	mainView := m.main.View()
@@ -135,5 +170,6 @@ func (m *Model) View() tea.View {
 
 	v := tea.NewView(final)
 	v.AltScreen = true
+	v.MouseMode = tea.MouseModeAllMotion
 	return v
 }

@@ -1,7 +1,10 @@
 package constants
 
+import "time"
+
 const (
-	MouseWheelStep = 3
+	MouseWheelBurstTimeout = 200 * time.Millisecond
+	MouseWheelMaxStep      = 16
 
 	MaxContentWidth = 100
 	MinContentWidth = 20

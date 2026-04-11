@@ -2,6 +2,7 @@ package internal
 
 import (
 	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yorukot/ssh.yorukot.me/content"
 	"github.com/yorukot/ssh.yorukot.me/internal/components/footer"
@@ -10,6 +11,7 @@ import (
 	"github.com/yorukot/ssh.yorukot.me/internal/keymap"
 	"github.com/yorukot/ssh.yorukot.me/internal/mkrender"
 	"github.com/yorukot/ssh.yorukot.me/internal/styles"
+	"time"
 )
 
 type Model struct {
@@ -43,6 +45,10 @@ type Model struct {
 
 	blogLineStarts  []int
 	blogLineHeights []int
+
+	lastWheelButton tea.MouseButton
+	wheelBurstLines int
+	lastWheelAt     time.Time
 }
 
 func (m *Model) contentWidth(hasScrollbar bool) int {
