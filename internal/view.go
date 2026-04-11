@@ -24,7 +24,6 @@ func (m *Model) windowsSizeChange(msg tea.WindowSizeMsg) {
 	// Model refresh
 	m.header = header.New(m.innerWidth, m.bg, m.path)
 	m.footer = footer.New(m.innerWidth, m.bg, m.keys)
-	m.refreshChrome()
 	m.syncViewport()
 }
 
@@ -65,7 +64,7 @@ func (m *Model) syncViewport() {
 		m.main = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 		m.main.MouseWheelEnabled = true
 		m.main.FillHeight = true
-		m.main.SoftWrap = false
+		m.main.SoftWrap = true
 		m.main.KeyMap.Up = m.keys.Up
 		m.main.KeyMap.Down = m.keys.Down
 		m.main.KeyMap.Left.Unbind()
@@ -132,6 +131,7 @@ func (m *Model) syncBlogSelectionViewport() {
 }
 
 func (m *Model) scrollbarView() string {
+
 	h := m.main.Height()
 	if h <= 0 {
 		return ""
@@ -146,38 +146,15 @@ func (m *Model) scrollbarView() string {
 	thumbHeight := max(1, visible*h/total)
 	maxTop := max(0, h-thumbHeight)
 	top := int(m.main.ScrollPercent() * float64(maxTop))
-	yOffset := m.main.YOffset()
-
-	if m.scrollbarContent != "" &&
-		m.scrollbarHeight == h &&
-		m.scrollbarTotal == total &&
-		m.scrollbarVisible == visible &&
-		m.scrollbarYOffset == yOffset &&
-		m.scrollbarThumbHeight == thumbHeight &&
-		m.scrollbarTop == top &&
-		m.scrollbarBg == m.bg {
-		return m.scrollbarContent
-	}
 
 	lines := make([]string, 0, h)
-	thumb := styles.ScrollbarThumb(m.bg).Render("█")
-	track := styles.ScrollbarTrack(m.bg).Render("│")
 	for i := range h {
 		if i >= top && i < top+thumbHeight {
-			lines = append(lines, thumb)
+			lines = append(lines, styles.ScrollbarThumb(m.bg).Render("█"))
 			continue
 		}
-		lines = append(lines, track)
+		lines = append(lines, styles.ScrollbarTrack(m.bg).Render("│"))
 	}
 
-	m.scrollbarContent = strings.Join(lines, "\n")
-	m.scrollbarHeight = h
-	m.scrollbarTotal = total
-	m.scrollbarVisible = visible
-	m.scrollbarYOffset = yOffset
-	m.scrollbarThumbHeight = thumbHeight
-	m.scrollbarTop = top
-	m.scrollbarBg = m.bg
-
-	return m.scrollbarContent
+	return strings.Join(lines, "\n")
 }

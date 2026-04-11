@@ -34,11 +34,6 @@ type Model struct {
 	footer   footer.Model
 	markdown mkrender.Renderer
 
-	headerContent string
-	headerHeight  int
-	footerContent string
-	footerHeight  int
-
 	renderedContent string
 	renderedWidth   int
 	renderedBase    int
@@ -48,15 +43,6 @@ type Model struct {
 
 	blogLineStarts  []int
 	blogLineHeights []int
-
-	scrollbarContent     string
-	scrollbarHeight      int
-	scrollbarTotal       int
-	scrollbarVisible     int
-	scrollbarYOffset     int
-	scrollbarThumbHeight int
-	scrollbarTop         int
-	scrollbarBg          string
 }
 
 func (m *Model) contentWidth(hasScrollbar bool) int {
@@ -69,13 +55,7 @@ func (m *Model) contentWidth(hasScrollbar bool) int {
 }
 
 func (m *Model) contentHeight() int {
-	return max(1, m.innerHeight-styles.InnerBoxPaddingTop*2-m.headerHeight-m.footerHeight)
-}
-
-func (m *Model) refreshChrome() {
-	m.headerContent = m.header.Render()
-	m.headerHeight = lipgloss.Height(m.headerContent)
-	m.footerContent = m.footer.Render()
-	m.footerHeight = lipgloss.Height(m.footerContent)
-	m.scrollbarContent = ""
+	headerHeight := lipgloss.Height(m.header.Render())
+	footerHeight := lipgloss.Height(m.footer.Render())
+	return max(1, m.innerHeight-styles.InnerBoxPaddingTop*2-headerHeight-footerHeight)
 }
