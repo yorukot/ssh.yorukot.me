@@ -52,6 +52,7 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 	m.header = header.New(m.innerWidth, m.bg, m.path)
 	m.footer = footer.New(m.innerWidth, m.bg, m.keys)
+	m.refreshChrome()
 	m.syncViewport()
 
 	return &m, []tea.ProgramOption{}
@@ -78,6 +79,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.header = header.New(m.innerWidth, m.bg, m.path)
 		m.footer = footer.New(m.innerWidth, m.bg, m.keys)
+		m.refreshChrome()
 		m.syncViewport()
 	case tea.WindowSizeMsg:
 		m.windowsSizeChange(msg)
@@ -115,9 +117,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) View() tea.View {
-	headerContent := m.header.Render()
 	mainView := m.main.View()
-	footerContent := m.footer.Render()
 	scrollbarView := m.scrollbarView()
 
 	var body string
@@ -128,7 +128,7 @@ func (m *Model) View() tea.View {
 		body = lipgloss.JoinHorizontal(lipgloss.Top, mainView, gap, scrollbarView)
 	}
 
-	innerContent := lipgloss.JoinVertical(lipgloss.Left, headerContent, body, footerContent)
+	innerContent := lipgloss.JoinVertical(lipgloss.Left, m.headerContent, body, m.footerContent)
 	inner := styles.InnerBox(m.innerWidth, m.innerHeight).Render(innerContent)
 
 	final := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, inner)

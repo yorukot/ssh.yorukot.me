@@ -8,6 +8,7 @@ import (
 func (m *Model) goToPath(path string) {
 	m.path = pathutil.NormalizePath(path)
 	m.header = header.New(m.innerWidth, m.bg, m.path)
+	m.refreshChrome()
 	m.syncViewport()
 	m.main.GotoTop()
 }
