@@ -21,16 +21,16 @@ func New() Bindings {
 			key.WithHelp("down/j", "scroll down"),
 		),
 		Back: key.NewBinding(
-			key.WithKeys("backspace", "left"),
+			key.WithKeys("q", "ctrl+o", "h", "backspace", "left", "esc"),
 			key.WithHelp("left/backspace", "back"),
 		),
 		Enter: key.NewBinding(
-			key.WithKeys("enter", "right"),
+			key.WithKeys("enter", "right", "l"),
 			key.WithHelp("enter/right", "enter"),
 		),
 		Quit: key.NewBinding(
-			key.WithKeys("q", "ctrl+c"),
-			key.WithHelp("q", "quit"),
+			key.WithKeys("ctrl+c"),
+			key.WithHelp("ctrl+c", "quit"),
 		),
 	}
 }
