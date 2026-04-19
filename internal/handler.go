@@ -25,16 +25,16 @@ import (
 // tea.WithAltScreen) on a session by session basis.
 func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	pty, _, _ := s.Pty()
-	// Get the request path and parse it
-	requestPath := "/"
-	if command := s.Command(); len(command) > 0 {
-		requestPath = pathutil.NormalizePath(command[0])
-	}
-
 	// load blog posts
 	blogPosts, err := content.BlogPosts()
 	if err != nil {
 		log.Fatalf("Error to load the blog posts: %v", err)
+	}
+
+	// Get the request path and parse it
+	requestPath := "/"
+	if command := s.Command(); len(command) > 0 {
+		requestPath = resolveRequestPath(command[0], blogPosts)
 	}
 
 	m := Model{

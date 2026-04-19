@@ -2,6 +2,7 @@ package content
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,6 +20,7 @@ type BlogPost struct {
 	PublishDate     string   `yaml:"publish_date"`
 	UpdatedDate     string   `yaml:"updated_date"`
 	Description     string   `yaml:"description"`
+	Slug            string   `yaml:"post_slug"`
 	Path            string
 	Content         string
 	RenderedContent string
@@ -27,12 +29,17 @@ type BlogPost struct {
 // BlogPosts get all the blog posts and return it
 func BlogPosts() ([]BlogPost, error) {
 	baseDir := filepath.Join("content", "markdown", "blog")
+	return blogPostsFromDir(baseDir)
+}
+
+func blogPostsFromDir(baseDir string) ([]BlogPost, error) {
 	entries, err := os.ReadDir(baseDir)
 	if err != nil {
 		return nil, err
 	}
 
 	posts := make([]BlogPost, 0, len(entries))
+	paths := make(map[string]string, len(entries))
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -43,6 +50,11 @@ func BlogPosts() ([]BlogPost, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if existingDir, exists := paths[post.Path]; exists {
+			return nil, fmt.Errorf("duplicate blog path %q in %q and %q", post.Path, existingDir, entry.Name())
+		}
+		paths[post.Path] = entry.Name()
 
 		posts = append(posts, post)
 	}
@@ -96,7 +108,11 @@ func loadBlogPost(dir, slug string) (BlogPost, error) {
 	}
 
 	post.Content = strings.TrimLeft(string(rest), "\n")
-	post.Path = "/blog/" + slug
+	post.Slug = strings.TrimSpace(post.Slug)
+	if post.Slug == "" {
+		post.Slug = slug
+	}
+	post.Path = "/blog/" + post.Slug
 
 	return post, nil
 }
