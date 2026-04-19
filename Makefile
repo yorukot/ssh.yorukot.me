@@ -7,6 +7,11 @@ dev:
 build:
 	go build -o bin/ssh.yorukot.me cmd/main.go 
 
+update-blog:
+	git -C vendor/yorukot.me pull origin main
+	git add vendor/yorukot.me
+	git commit -m "Update blog content"
+
 lint:
 	go fmt ./...
 	go vet ./...
