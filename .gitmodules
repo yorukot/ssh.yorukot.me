@@ -1,0 +1,3 @@
+[submodule "vendor/yorukot.me"]
+	path = vendor/yorukot.me
+	url = https://github.com/yorukot/yorukot.me.git
