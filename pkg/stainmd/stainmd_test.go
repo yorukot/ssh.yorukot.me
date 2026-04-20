@@ -289,7 +289,7 @@ func TestRenderTable(t *testing.T) {
 	}
 }
 
-func TestRenderTableLeavesRoomForTerminalWrap(t *testing.T) {
+func TestRenderTableUsesAvailableWidth(t *testing.T) {
 	renderer := New()
 
 	input := strings.Join([]string{
@@ -307,8 +307,8 @@ func TestRenderTableLeavesRoomForTerminalWrap(t *testing.T) {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		if width := lipgloss.Width(line); width > 20 {
-			t.Fatalf("expected table line width to leave viewport headroom, got %d for %q\noutput:\n%s", width, line, out)
+		if width := lipgloss.Width(line); width != 24 {
+			t.Fatalf("expected table line width to use available width, got %d for %q\noutput:\n%s", width, line, out)
 		}
 	}
 }

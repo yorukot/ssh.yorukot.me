@@ -110,11 +110,10 @@ func (r Renderer) renderTable(node *extast.Table, source []byte, width int) stri
 		body = append(body, append([]string(nil), row...))
 	}
 
-	tableWidth := max(width-4, 1)
 	tbl := table.New().
 		Headers(headers...).
 		Rows(body...).
-		Width(tableWidth).
+		Width(max(width, 1)).
 		Wrap(true).
 		Border(r.Content.Table.Border).
 		BorderStyle(r.Content.Table.BorderStyle).

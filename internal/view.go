@@ -64,7 +64,6 @@ func (m *Model) syncViewport() {
 		m.main = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 		m.main.MouseWheelEnabled = false
 		m.main.FillHeight = true
-		m.main.SoftWrap = true
 		m.main.KeyMap.Up = m.keys.Up
 		m.main.KeyMap.Down = m.keys.Down
 		m.main.KeyMap.Left.Unbind()
