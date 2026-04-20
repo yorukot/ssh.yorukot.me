@@ -1,8 +1,12 @@
 package mkrender
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	xansi "github.com/charmbracelet/x/ansi"
 )
 
 func TestRenderUsesStainmd(t *testing.T) {
@@ -72,7 +76,7 @@ func TestResolveMarkdownImagePathResolvesRelativeImagePaths(t *testing.T) {
 	}
 
 	for input, want := range tests {
-		if got := resolveMarkdownImagePath(sourcePath, input); got != want {
+		if got := resolveMarkdownImagePath(sourcePath, input, nil); got != want {
 			t.Fatalf("resolveMarkdownImagePath(%q) = %q, want %q", input, got, want)
 		}
 	}
@@ -87,9 +91,35 @@ func TestResolveMarkdownImagePathLeavesExternalAndAbsoluteImagePaths(t *testing.
 	}
 
 	for _, input := range tests {
-		if got := resolveMarkdownImagePath(sourcePath, input); got != input {
+		if got := resolveMarkdownImagePath(sourcePath, input, nil); got != input {
 			t.Fatalf("resolveMarkdownImagePath(%q) = %q, want unchanged", input, got)
 		}
+	}
+}
+
+func TestResolveMarkdownImagePathUsesManifestForLocalImages(t *testing.T) {
+	sourcePath := "content/markdown/blog/before-you-build-a-tui-or-cli-app/index.md"
+	manifest := map[string]string{
+		"content/markdown/blog/before-you-build-a-tui-or-cli-app/superfile-hackernews.png": "https://yorukot.me/_astro/superfile-hackernews.DfsmIV1R_1MOWGh.webp",
+	}
+
+	got := resolveMarkdownImagePath(sourcePath, "./superfile-hackernews.png", manifest)
+	want := "https://yorukot.me/_astro/superfile-hackernews.DfsmIV1R_1MOWGh.webp"
+	if got != want {
+		t.Fatalf("resolveMarkdownImagePath() = %q, want %q", got, want)
+	}
+}
+
+func TestResolveMarkdownImagePathPreservesSuffixAfterManifestLookup(t *testing.T) {
+	sourcePath := "content/markdown/blog/how-to-custom-gnome-terminal/index.md"
+	manifest := map[string]string{
+		"content/markdown/blog/how-to-custom-gnome-terminal/intro.webp": "https://yorukot.me/_astro/intro.hash.webp",
+	}
+
+	got := resolveMarkdownImagePath(sourcePath, "./intro.webp#caption", manifest)
+	want := "https://yorukot.me/_astro/intro.hash.webp#caption"
+	if got != want {
+		t.Fatalf("resolveMarkdownImagePath() = %q, want %q", got, want)
 	}
 }
 
@@ -106,8 +136,57 @@ func TestRenderWithSourceUsesResolvedImagePaths(t *testing.T) {
 		t.Fatalf("RenderWithSource returned error: %v", err)
 	}
 
-	want := "src/content/blog/how-to-custom-gnome-terminal/intro.webp"
+	want := xansi.SetHyperlink("src/content/blog/how-to-custom-gnome-terminal/intro.webp")
 	if !strings.Contains(out, want) {
-		t.Fatalf("expected rendered image to use resolved path %q\noutput:\n%s", want, out)
+		t.Fatalf("expected rendered image to link to resolved path %q\noutput:\n%s", want, out)
+	}
+	if !strings.Contains(out, "Image: ") || !strings.Contains(out, "intro image") {
+		t.Fatalf("expected rendered image to include image hint\noutput:\n%s", out)
+	}
+}
+
+func TestRenderWithSourceUsesManifestImageURL(t *testing.T) {
+	renderer := Renderer{
+		imageManifest: map[string]string{
+			"content/markdown/blog/how-to-custom-gnome-terminal/intro.webp": "https://yorukot.me/_astro/intro.BiMzQ8pt_Z1eIygR.webp",
+		},
+	}
+
+	out, err := renderer.RenderWithSource(
+		"![intro image](./intro.webp)",
+		"content/markdown/blog/how-to-custom-gnome-terminal/index.md",
+		160,
+		"dark",
+	)
+	if err != nil {
+		t.Fatalf("RenderWithSource returned error: %v", err)
+	}
+
+	want := "https://yorukot.me/_astro/intro.BiMzQ8pt_Z1eIygR.webp"
+	if !strings.Contains(out, xansi.SetHyperlink(want)) {
+		t.Fatalf("expected rendered image to link to manifest URL %q\noutput:\n%s", want, out)
+	}
+	if strings.Contains(out, " "+want) {
+		t.Fatalf("expected rendered image to hide manifest URL behind OSC8 label\noutput:\n%s", out)
+	}
+}
+
+func TestLoadImageManifest(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "manifest.json")
+	body := `{
+  "site": "https://yorukot.me",
+  "images": {
+    "content/markdown/blog/post/image.png": "https://yorukot.me/_astro/image.hash.webp"
+  }
+}`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	manifest := loadImageManifest(path)
+	got := manifest["content/markdown/blog/post/image.png"]
+	want := "https://yorukot.me/_astro/image.hash.webp"
+	if got != want {
+		t.Fatalf("loadImageManifest()[image] = %q, want %q", got, want)
 	}
 }

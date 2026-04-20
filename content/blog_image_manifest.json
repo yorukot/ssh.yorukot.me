@@ -1,0 +1,10 @@
+{
+  "site": "https://yorukot.me",
+  "images": {
+    "content/markdown/blog/before-you-build-a-tui-or-cli-app/docker-example.png": "https://yorukot.me/_astro/docker-example.DZNgTD1I_1pxqPz.webp",
+    "content/markdown/blog/before-you-build-a-tui-or-cli-app/superfile-hackernews.png": "https://yorukot.me/_astro/superfile-hackernews.DfsmIV1R_1MOWGh.webp",
+    "content/markdown/blog/before-you-build-a-tui-or-cli-app/superfile-v1.1.7.1.png": "https://yorukot.me/_astro/superfile-v1.1.7.1.B3VdIa2C_z1rgA.webp",
+    "content/markdown/blog/before-you-build-a-tui-or-cli-app/tui-example.webp": "https://yorukot.me/_astro/tui-example.CvA6KwE6_ZNqrcX.webp",
+    "content/markdown/blog/how-to-custom-gnome-terminal/intro.webp": "https://yorukot.me/_astro/intro.BiMzQ8pt_Z1eIygR.webp"
+  }
+}

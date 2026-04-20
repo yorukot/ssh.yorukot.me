@@ -285,18 +285,17 @@ func (r Renderer) renderInlineNode(node ast.Node, source []byte, base lipgloss.S
 		return mergeInlineStyle(base, r.Content.Link.Text).Hyperlink(string(n.URL(source))).Render(label)
 	case *ast.Image:
 		label := r.renderInlineChildrenWithStyle(n, source, mergeInlineStyle(base, r.Content.Image.Alt))
-		if strings.TrimSpace(label) == "" {
-			label = string(n.Destination)
-		}
-		var parts []string
-		parts = append(parts, r.Content.Image.Alt.Render(label))
 		if dest := strings.TrimSpace(string(n.Destination)); dest != "" {
 			if r.ImagePathResolver != nil {
 				dest = r.ImagePathResolver(dest)
 			}
-			parts = append(parts, r.Content.Image.Path.Render(dest))
+			if strings.TrimSpace(label) == "" {
+				label = dest
+			}
+			label = "Image: " + label
+			return mergeInlineStyle(base, r.Content.Image.Alt).Hyperlink(dest).Render(label)
 		}
-		return strings.Join(parts, " ")
+		return r.Content.Image.Alt.Render(label)
 	default:
 		if node.HasChildren() {
 			return r.renderInlineChildrenWithStyle(node, source, base)

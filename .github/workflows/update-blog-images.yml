@@ -1,0 +1,74 @@
+name: Update blog image manifest
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - content/blog_image_manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-blog-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+          cache-dependency-path: yorukot.me/pnpm-lock.yaml
+
+      - name: Update blog submodule
+        run: git -C yorukot.me pull origin main
+
+      - name: Install Astro dependencies
+        run: pnpm --dir yorukot.me install --frozen-lockfile
+
+      - name: Build Astro site
+        run: pnpm --dir yorukot.me build
+
+      - name: Generate blog image manifest
+        run: go run ./cmd/blogimagemanifest
+
+      - name: Test Go project
+        run: go test ./...
+
+      - name: Build Go project
+        run: go build -o bin/ssh.yorukot.me cmd/main.go
+
+      - name: Commit generated blog image manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add yorukot.me content/blog_image_manifest.json
+
+          if git diff --cached --quiet; then
+            echo "No blog image manifest changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update blog image manifest"
+          git push
