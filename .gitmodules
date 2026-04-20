@@ -1,3 +1,4 @@
 [submodule "yorukot.me"]
 	path = yorukot.me
 	url = https://github.com/yorukot/yorukot.me.git
+	branch = main

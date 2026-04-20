@@ -8,8 +8,7 @@ build:
 	go build -o bin/ssh.yorukot.me cmd/main.go 
 
 update-blog:
-	git -C yorukot.me fetch origin main
-	git -C yorukot.me reset --hard origin/main
+	git submodule update --remote --checkout --force yorukot.me
 	$(MAKE) generate-blog-image-manifest
 	git add yorukot.me
 	git add content/blog_image_manifest.json

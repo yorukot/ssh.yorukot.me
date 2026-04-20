@@ -27,12 +27,13 @@ func GetContent() Content {
 		HeaderTagline: "Open-source developer",
 		FooterQuote:   "Get busy living, or get busy dying",
 		FooterLinks: []FooterLink{
-			{Label: "Email", Content: "hi@yorukot.me", URL: "https://yorukot.me/mail"},
-			{Label: "GitHub", URL: "https://yorukot.me/gh"},
-			{Label: "Telegram", URL: "https://yorukot.me/tg"},
-			{Label: "Discord", URL: "https://yorukot.me/dc"},
-			{Label: "Ko-fi", URL: "https://yorukot.me/donate"},
+			{Label: "Email", Content: "hi@yorukot.me", URL: "mailto:hi@yorukot.me"},
+			{Label: "GitHub", Content: "github.com/yorukot", URL: "https://yorukot.me/github"},
+			{Label: "Telegram", Content: "t.me/yorukot", URL: "https://yorukot.me/telegram"},
+			{Label: "Discord", Content: "yoru.kot", URL: "https://yorukot.me/discord"},
+			{Label: "Ko-fi", Content: "ko-fi.com/yorukot", URL: "https://yorukot.me/sponsor"},
 			{Label: "OpenPGP", Content: "F0188B9BF901C94E", URL: "https://yorukot.me/gpg"},
+			{Label: "Special", Content: "ssh.yorukot.me repo", URL: "https://github.com/yorukot/ssh.yorukot.me"},
 		},
 	}
 }
