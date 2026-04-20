@@ -41,7 +41,7 @@ jobs:
           cache-dependency-path: yorukot.me/pnpm-lock.yaml
 
       - name: Update blog submodule
-        run: git -C yorukot.me pull origin main
+        run: git -C yorukot.me pull --ff-only origin main
 
       - name: Install Astro dependencies
         run: pnpm --dir yorukot.me install --frozen-lockfile

@@ -8,7 +8,7 @@ build:
 	go build -o bin/ssh.yorukot.me cmd/main.go 
 
 update-blog:
-	git -C yorukot.me pull origin main
+	git -C yorukot.me pull --ff-only origin main
 	$(MAKE) generate-blog-image-manifest
 	git add yorukot.me
 	git add content/blog_image_manifest.json
