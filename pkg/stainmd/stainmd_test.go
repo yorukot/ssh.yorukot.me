@@ -289,6 +289,30 @@ func TestRenderTable(t *testing.T) {
 	}
 }
 
+func TestRenderTableLeavesRoomForTerminalWrap(t *testing.T) {
+	renderer := New()
+
+	input := strings.Join([]string{
+		"| Name | Status |",
+		"| --- | --- |",
+		"| Links | Ready |",
+	}, "\n")
+
+	out, err := renderer.Render(input, 24)
+	if err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	for _, line := range strings.Split(stripANSI(out), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if width := lipgloss.Width(line); width > 20 {
+			t.Fatalf("expected table line width to leave viewport headroom, got %d for %q\noutput:\n%s", width, line, out)
+		}
+	}
+}
+
 func TestRenderTableWithCustomBorder(t *testing.T) {
 	renderer := New()
 	renderer.Content.Table.Border = lipgloss.ThickBorder()

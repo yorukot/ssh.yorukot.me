@@ -15,9 +15,10 @@ import (
 var ansiPattern = regexp.MustCompile(`\x1b\[[0-9;]*[A-Za-z]`)
 
 type Renderer struct {
-	Document DocumentStyle
-	Header   HeaderStyle
-	Content  ContentStyle
+	Document          DocumentStyle
+	Header            HeaderStyle
+	Content           ContentStyle
+	ImagePathResolver func(destination string) string
 }
 
 func New() Renderer {

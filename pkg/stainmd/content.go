@@ -110,10 +110,11 @@ func (r Renderer) renderTable(node *extast.Table, source []byte, width int) stri
 		body = append(body, append([]string(nil), row...))
 	}
 
+	tableWidth := max(width-4, 1)
 	tbl := table.New().
 		Headers(headers...).
 		Rows(body...).
-		Width(max(width, 1)).
+		Width(tableWidth).
 		Wrap(true).
 		Border(r.Content.Table.Border).
 		BorderStyle(r.Content.Table.BorderStyle).
@@ -291,6 +292,9 @@ func (r Renderer) renderInlineNode(node ast.Node, source []byte, base lipgloss.S
 		var parts []string
 		parts = append(parts, r.Content.Image.Alt.Render(label))
 		if dest := strings.TrimSpace(string(n.Destination)); dest != "" {
+			if r.ImagePathResolver != nil {
+				dest = r.ImagePathResolver(dest)
+			}
 			parts = append(parts, r.Content.Image.Path.Render(dest))
 		}
 		return strings.Join(parts, " ")

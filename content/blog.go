@@ -22,6 +22,7 @@ type BlogPost struct {
 	Description     string   `yaml:"description"`
 	Slug            string   `yaml:"post_slug"`
 	Path            string
+	SourcePath      string
 	Content         string
 	RenderedContent string
 }
@@ -97,7 +98,8 @@ func loadBlogPost(dir, slug string) (BlogPost, error) {
 	}
 
 	sort.Strings(mdFiles)
-	body, err := os.ReadFile(filepath.Join(dir, mdFiles[0]))
+	sourcePath := filepath.Join(dir, mdFiles[0])
+	body, err := os.ReadFile(sourcePath)
 	if err != nil {
 		return BlogPost{}, err
 	}
@@ -113,6 +115,7 @@ func loadBlogPost(dir, slug string) (BlogPost, error) {
 		post.Slug = slug
 	}
 	post.Path = "/blog/" + post.Slug
+	post.SourcePath = sourcePath
 
 	return post, nil
 }

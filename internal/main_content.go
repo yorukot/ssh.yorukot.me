@@ -6,25 +6,36 @@ import (
 	"github.com/yorukot/ssh.yorukot.me/content"
 )
 
+type pageMarkdown struct {
+	Content    string
+	SourcePath string
+}
+
 func (m *Model) isBlogPost() bool {
 	return strings.HasPrefix(m.path, "/blog/")
 }
 
-func (m *Model) pageContent() string {
+func (m *Model) pageMarkdown() pageMarkdown {
 	switch {
 	case m.path == "/":
 		home, err := content.HomePage()
 		if err != nil {
-			return content.ErrorPage(m.path, err)
+			return pageMarkdown{Content: content.ErrorPage(m.path, err)}
 		}
-		return home
+		return pageMarkdown{
+			Content:    home,
+			SourcePath: "content/markdown/intro.md",
+		}
 	case m.isBlogPost():
 		post, err := content.FindPost(m.blogs, m.path)
 		if err != nil {
-			return content.NotFoundPage(m.path)
+			return pageMarkdown{Content: content.NotFoundPage(m.path)}
 		}
-		return post.Content
+		return pageMarkdown{
+			Content:    post.Content,
+			SourcePath: post.SourcePath,
+		}
 	default:
-		return content.NotFoundPage(m.path)
+		return pageMarkdown{Content: content.NotFoundPage(m.path)}
 	}
 }

@@ -62,3 +62,52 @@ func TestRenderIgnoresRawTagLines(t *testing.T) {
 		t.Fatalf("expected rendered output to avoid escaped raw tag lines\noutput:\n%s", out)
 	}
 }
+
+func TestResolveMarkdownImagePathResolvesRelativeImagePaths(t *testing.T) {
+	sourcePath := "src/content/blog/before-you-build-a-tui-or-cli-app/index.md"
+	tests := map[string]string{
+		"./tui-example.webp":    "src/content/blog/before-you-build-a-tui-or-cli-app/tui-example.webp",
+		"./docker-example.png":  "src/content/blog/before-you-build-a-tui-or-cli-app/docker-example.png",
+		"../shared/example.png": "src/content/blog/shared/example.png",
+	}
+
+	for input, want := range tests {
+		if got := resolveMarkdownImagePath(sourcePath, input); got != want {
+			t.Fatalf("resolveMarkdownImagePath(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
+func TestResolveMarkdownImagePathLeavesExternalAndAbsoluteImagePaths(t *testing.T) {
+	sourcePath := "src/content/blog/how-to-custom-gnome-terminal/index.md"
+	tests := []string{
+		"https://i.imgur.com/xyN5XY2.webp",
+		"/blog-assets/how-to-custom-gnome-terminal/intro.webp",
+		"mailto:hi@yorukot.me",
+	}
+
+	for _, input := range tests {
+		if got := resolveMarkdownImagePath(sourcePath, input); got != input {
+			t.Fatalf("resolveMarkdownImagePath(%q) = %q, want unchanged", input, got)
+		}
+	}
+}
+
+func TestRenderWithSourceUsesResolvedImagePaths(t *testing.T) {
+	renderer := New()
+
+	out, err := renderer.RenderWithSource(
+		"![intro image](./intro.webp)",
+		"src/content/blog/how-to-custom-gnome-terminal/index.md",
+		160,
+		"dark",
+	)
+	if err != nil {
+		t.Fatalf("RenderWithSource returned error: %v", err)
+	}
+
+	want := "src/content/blog/how-to-custom-gnome-terminal/intro.webp"
+	if !strings.Contains(out, want) {
+		t.Fatalf("expected rendered image to use resolved path %q\noutput:\n%s", want, out)
+	}
+}

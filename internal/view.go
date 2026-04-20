@@ -97,10 +97,10 @@ func (m *Model) renderContent(width int) (string, blogindex.Metrics) {
 		return appendEndSection(content), metrics
 	}
 
-	pageContent := m.pageContent()
-	content, err := m.markdown.Render(pageContent, width, m.bg)
+	page := m.pageMarkdown()
+	content, err := m.markdown.RenderWithSource(page.Content, page.SourcePath, width, m.bg)
 	if err != nil {
-		content = lipgloss.Wrap(pageContent, width, "")
+		content = lipgloss.Wrap(page.Content, width, "")
 	}
 
 	return appendEndSection(content), blogindex.Metrics{}

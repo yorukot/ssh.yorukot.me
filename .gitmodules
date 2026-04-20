@@ -1,3 +1,3 @@
-[submodule "vendor/yorukot.me"]
-	path = vendor/yorukot.me
+[submodule "yorukot.me"]
+	path = yorukot.me
 	url = https://github.com/yorukot/yorukot.me.git
