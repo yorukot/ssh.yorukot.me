@@ -5,6 +5,7 @@ dev:
 	air go run cmd/main.go
 
 build:
+	git submodule update --init --recursive
 	go build -o bin/ssh.yorukot.me cmd/main.go 
 
 update-blog:
