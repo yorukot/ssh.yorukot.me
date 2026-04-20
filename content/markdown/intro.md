@@ -9,5 +9,5 @@ Hi! I am yorukot i am a open-source developer who live in taiwan and love termin
 You can find me with following methods.
 
 - Email: hi@yorukot.me
-- GitHub: https://github.com/yorukot
-- Discord: https://discord.yorukot.me
+- GitHub: https://yorukot.me/gh
+- Discord: https://yorukot.me/dc

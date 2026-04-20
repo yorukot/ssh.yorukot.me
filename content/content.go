@@ -16,9 +16,9 @@ type Content struct {
 }
 
 type FooterLink struct {
-	Label string
+	Label   string
 	Content string
-	URL   string
+	URL     string
 }
 
 func GetContent() Content {
@@ -27,12 +27,12 @@ func GetContent() Content {
 		HeaderTagline: "Open-source developer",
 		FooterQuote:   "Get busy living, or get busy dying",
 		FooterLinks: []FooterLink{
-			{Label: "Email", Content:"hi@yorukot.me", URL: "mailto:hi@yorukot.me"},
-			{Label: "GitHub", URL: "https://github.com/yorukot"},
-			{Label: "Telegram", URL: "https://t.me/yorukot"},
-			{Label: "Discord", URL: "https://dc.yorukot.me"},
-			{Label: "Ko-fi", URL: "https://donate.yorukot.me"},
-			{Label: "OpenPGP", Content: "F0188B9BF901C94E", URL: "https://keys.openpgp.org/search?q=F0188B9BF901C94E"},
+			{Label: "Email", Content: "hi@yorukot.me", URL: "https://yorukot.me/mail"},
+			{Label: "GitHub", URL: "https://yorukot.me/gh"},
+			{Label: "Telegram", URL: "https://yorukot.me/tg"},
+			{Label: "Discord", URL: "https://yorukot.me/dc"},
+			{Label: "Ko-fi", URL: "https://yorukot.me/donate"},
+			{Label: "OpenPGP", Content: "F0188B9BF901C94E", URL: "https://yorukot.me/gpg"},
 		},
 	}
 }
