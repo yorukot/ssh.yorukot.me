@@ -1,5 +1,8 @@
-[![ssh.yorukot.me banner](./assets/banner-black.png#gh-dark-mode-only)](https://ssh.yorukot.me)
-[![ssh.yorukot.me banner](./assets/banner-white.png#gh-light-mode-only)](https://ssh.yorukot.me)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-black.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/banner-white.png">
+  <img alt="ssh.yorukot.me banner" src="./assets/banner-white.png">
+</picture>
 
 # ssh.yorukot.me
 
@@ -140,8 +143,13 @@ If you end up building your own SSH site from this, feel free to fork it and mak
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yorukot/ssh.yorukot.me&type=Timeline&theme=dark#gh-dark-mode-only)](https://star-history.com/#yorukot/ssh.yorukot.me&Timeline)
-[![Star History Chart](https://api.star-history.com/svg?repos=yorukot/ssh.yorukot.me&type=Timeline#gh-light-mode-only)](https://star-history.com/#yorukot/ssh.yorukot.me&Timeline)
+<a href="https://star-history.com/#yorukot/ssh.yorukot.me&Timeline">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=yorukot/ssh.yorukot.me&type=Timeline&theme=dark">
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=yorukot/ssh.yorukot.me&type=Timeline">
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=yorukot/ssh.yorukot.me&type=Timeline">
+  </picture>
+</a>
 
 <div align="center">
 
