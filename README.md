@@ -25,6 +25,7 @@ It is built with Go, [Wish](https://github.com/charmbracelet/wish), and [Bubble 
 - [Configuration](#configuration)
 - [Built with](#built-with)
 - [License](#license)
+- [Special Thanks](#special-thanks)
 
 
 ## Feature
@@ -140,6 +141,10 @@ HOST=127.0.0.1 PORT=23234 ENV=dev PPROF_ADDR=:6060 go run cmd/main.go
 This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
 
 If you end up building your own SSH site from this, feel free to fork it and make it your own.
+
+## Special Thanks
+
+Special thanks to [NCSE Network](https://ncse.tw/en/) for providing a free VPS to host this project.
 
 ## Star History
 
