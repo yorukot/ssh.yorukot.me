@@ -4,7 +4,7 @@
   <img alt="ssh.yorukot.me banner" src="./assets/banner-white.png">
 </picture>
 
-# ssh.yorukot.me
+---
 
 An SSH-powered version of my personal website.
 
