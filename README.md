@@ -146,6 +146,8 @@ If you end up building your own SSH site from this, feel free to fork it and mak
 
 Special thanks to [NCSE Network](https://ncse.tw/en/) for providing a free VPS to host this project.
 
+![NCSE Network banner](./assets/ncse-banner.png)
+
 ## Star History
 
 <a href="https://star-history.com/#yorukot/ssh.yorukot.me&Timeline">
