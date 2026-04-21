@@ -27,7 +27,7 @@ It is built with Go, [Wish](https://github.com/charmbracelet/wish), and [Bubble 
 - [License](#license)
 
 
-## What you can do
+## Feature
 
 - Open the site directly over SSH.
 - Read the home page and personal intro in the terminal.
