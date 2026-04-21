@@ -144,9 +144,16 @@ If you end up building your own SSH site from this, feel free to fork it and mak
 
 ## Special Thanks
 
-Special thanks to [NCSE Network](https://ncse.tw/en/) for providing a free VPS to host this project.
-
-![NCSE Network banner](./assets/ncse-banner.png)
+<table>
+  <tr>
+    <td>
+      Special thanks to <a href="https://ncse.tw/en/">NCSE Network</a> for providing a free VPS to host this project.
+    </td>
+    <td align="right">
+      <img alt="NCSE Network banner" src="./assets/ncse-banner.png" width="220">
+    </td>
+  </tr>
+</table>
 
 ## Star History
 
