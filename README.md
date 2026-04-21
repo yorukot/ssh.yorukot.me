@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-black.png">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/banner-white.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-white.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/banner-black.png">
   <img alt="ssh.yorukot.me banner" src="./assets/banner-white.png">
 </picture>
 
