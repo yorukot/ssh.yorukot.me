@@ -16,6 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /out/ssh.yorukot.me /usr/local/bin/ssh.yorukot.me
 COPY content ./content
+COPY yorukot.me/src/content/blog ./content/markdown/blog
 
 EXPOSE 23234
 
