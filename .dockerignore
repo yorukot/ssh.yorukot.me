@@ -1,0 +1,9 @@
+.git
+.github
+.ssh
+.env
+bin
+tmp
+node_modules
+yorukot.me/node_modules
+yorukot.me/dist
