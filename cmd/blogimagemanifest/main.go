@@ -22,7 +22,8 @@ type manifest struct {
 }
 
 type postMetadata struct {
-	Slug string `yaml:"post_slug"`
+	Slug  string `yaml:"post_slug"`
+	Draft bool   `yaml:"draft"`
 }
 
 type localImage struct {
@@ -83,9 +84,12 @@ func buildManifest(blogRoot, distRoot, siteURL string) (manifest, error) {
 	}
 
 	for _, markdownFile := range markdownFiles {
-		slug, err := postSlug(markdownFile)
+		post, err := postMetadataForFile(markdownFile)
 		if err != nil {
 			return manifest{}, err
+		}
+		if post.Draft {
+			continue
 		}
 
 		localImages, err := localMarkdownImages(markdownFile)
@@ -96,7 +100,7 @@ func buildManifest(blogRoot, distRoot, siteURL string) (manifest, error) {
 			continue
 		}
 
-		htmlPath, err := builtBlogHTMLPath(distRoot, slug)
+		htmlPath, err := builtBlogHTMLPath(distRoot, post.Slug)
 		if err != nil {
 			return manifest{}, err
 		}
@@ -146,22 +150,22 @@ func findMarkdownFiles(blogRoot string) ([]string, error) {
 	return files, nil
 }
 
-func postSlug(markdownFile string) (string, error) {
+func postMetadataForFile(markdownFile string) (postMetadata, error) {
 	body, err := os.ReadFile(markdownFile)
 	if err != nil {
-		return "", err
+		return postMetadata{}, err
 	}
 
 	var metadata postMetadata
 	if _, err := frontmatter.Parse(strings.NewReader(string(body)), &metadata); err != nil {
-		return "", err
+		return postMetadata{}, err
 	}
 
-	slug := strings.TrimSpace(metadata.Slug)
-	if slug == "" {
-		slug = filepath.Base(filepath.Dir(markdownFile))
+	metadata.Slug = strings.TrimSpace(metadata.Slug)
+	if metadata.Slug == "" {
+		metadata.Slug = filepath.Base(filepath.Dir(markdownFile))
 	}
-	return slug, nil
+	return metadata, nil
 }
 
 func localMarkdownImages(markdownFile string) ([]localImage, error) {

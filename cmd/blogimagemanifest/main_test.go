@@ -71,6 +71,55 @@ post_slug: post
 	}
 }
 
+func TestBuildManifestSkipsDraftPosts(t *testing.T) {
+	root := t.TempDir()
+	blogRoot := filepath.Join(root, "content", "markdown", "blog")
+	distRoot := filepath.Join(root, "dist")
+
+	visibleDir := filepath.Join(blogRoot, "visible-post")
+	writeFile(t, filepath.Join(visibleDir, "index.md"), `---
+title: Visible
+post_slug: visible-post
+---
+
+![Visible](./visible.png)
+`)
+	writeFile(t, filepath.Join(distRoot, "blog", "visible-post", "index.html"), `
+<article>
+  <img src="/_astro/visible.hash.webp" alt="Visible">
+</article>
+`)
+
+	draftDir := filepath.Join(blogRoot, "draft-post")
+	writeFile(t, filepath.Join(draftDir, "index.md"), `---
+title: Draft
+post_slug: draft-post
+draft: true
+---
+
+![Draft](./draft.png)
+`)
+
+	manifest, err := buildManifest(blogRoot, distRoot, "https://yorukot.me")
+	if err != nil {
+		t.Fatalf("buildManifest returned error: %v", err)
+	}
+
+	if len(manifest.Images) != 1 {
+		t.Fatalf("expected 1 image mapping, got %d: %#v", len(manifest.Images), manifest.Images)
+	}
+
+	visiblePath := filepath.ToSlash(filepath.Join(visibleDir, "visible.png"))
+	if got := manifest.Images[visiblePath]; got != "https://yorukot.me/_astro/visible.hash.webp" {
+		t.Fatalf("manifest.Images[%q] = %q, want %q", visiblePath, got, "https://yorukot.me/_astro/visible.hash.webp")
+	}
+
+	draftPath := filepath.ToSlash(filepath.Join(draftDir, "draft.png"))
+	if _, ok := manifest.Images[draftPath]; ok {
+		t.Fatalf("draft image %q should not be included in manifest", draftPath)
+	}
+}
+
 func writeFile(t *testing.T, path, content string) {
 	t.Helper()
 

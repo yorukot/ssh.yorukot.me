@@ -21,6 +21,7 @@ type BlogPost struct {
 	UpdatedDate     string   `yaml:"updated_date"`
 	Description     string   `yaml:"description"`
 	Slug            string   `yaml:"post_slug"`
+	Draft           bool     `yaml:"draft"`
 	Path            string
 	SourcePath      string
 	Content         string
@@ -50,6 +51,9 @@ func blogPostsFromDir(baseDir string) ([]BlogPost, error) {
 		post, err := loadBlogPost(blogPath, entry.Name())
 		if err != nil {
 			return nil, err
+		}
+		if post.Draft {
+			continue
 		}
 
 		if existingDir, exists := paths[post.Path]; exists {
