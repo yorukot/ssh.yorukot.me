@@ -96,6 +96,7 @@ func buildManifest(blogRoot, distRoot, siteURL string) (manifest, error) {
 		if err != nil {
 			return manifest{}, err
 		}
+		localImages = uniqueLocalImages(localImages)
 		if len(localImages) == 0 {
 			continue
 		}
@@ -187,6 +188,20 @@ func localMarkdownImages(markdownFile string) ([]localImage, error) {
 	}
 
 	return images, nil
+}
+
+func uniqueLocalImages(images []localImage) []localImage {
+	seen := make(map[string]bool, len(images))
+	unique := make([]localImage, 0, len(images))
+	for _, image := range images {
+		key := filepath.ToSlash(image.Source)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		unique = append(unique, image)
+	}
+	return unique
 }
 
 func builtBlogHTMLPath(distRoot, slug string) (string, error) {

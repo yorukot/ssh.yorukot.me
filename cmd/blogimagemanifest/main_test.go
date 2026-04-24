@@ -71,6 +71,38 @@ post_slug: post
 	}
 }
 
+func TestBuildManifestDeduplicatesRepeatedLocalImages(t *testing.T) {
+	root := t.TempDir()
+	blogRoot := filepath.Join(root, "content", "markdown", "blog")
+	distRoot := filepath.Join(root, "dist")
+
+	postDir := filepath.Join(blogRoot, "post")
+	writeFile(t, filepath.Join(postDir, "index.md"), `---
+title: Test
+post_slug: post
+---
+
+![Flow](./oauth-flow.png)
+Some text between the repeated image references.
+![Flow again](./oauth-flow.png)
+`)
+	writeFile(t, filepath.Join(distRoot, "blog", "post", "index.html"), `<img src="/_astro/oauth-flow.hash.webp">`)
+
+	manifest, err := buildManifest(blogRoot, distRoot, "https://yorukot.me")
+	if err != nil {
+		t.Fatalf("buildManifest returned error: %v", err)
+	}
+
+	if len(manifest.Images) != 1 {
+		t.Fatalf("expected 1 image mapping, got %d: %#v", len(manifest.Images), manifest.Images)
+	}
+
+	imagePath := filepath.ToSlash(filepath.Join(postDir, "oauth-flow.png"))
+	if got := manifest.Images[imagePath]; got != "https://yorukot.me/_astro/oauth-flow.hash.webp" {
+		t.Fatalf("manifest.Images[%q] = %q, want %q", imagePath, got, "https://yorukot.me/_astro/oauth-flow.hash.webp")
+	}
+}
+
 func TestBuildManifestSkipsDraftPosts(t *testing.T) {
 	root := t.TempDir()
 	blogRoot := filepath.Join(root, "content", "markdown", "blog")
